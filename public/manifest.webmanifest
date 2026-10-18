@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Lisible · CV conformes ATS",
+  "short_name": "Lisible",
+  "description": "Créez, importez et adaptez des CV conformes aux ATS, avec lettre de motivation et préparation d’entretien.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#F3EFE7",
+  "theme_color": "#1C1915",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Importer un CV", "url": "/?screen=import", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Adapter à une offre", "url": "/?screen=adapt", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Lettre de motivation", "url": "/?screen=letter", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

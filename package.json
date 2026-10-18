@@ -5,8 +5,10 @@
   "type": "module",
   "description": "Lisible — CV conformes ATS, adaptés à chaque offre (Gemini + Claude + Supabase)",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "build": "node scripts/copy-vendor.mjs",
+    "postinstall": "node scripts/copy-vendor.mjs",
+    "start": "node scripts/copy-vendor.mjs && node server/index.js",
+    "dev": "node scripts/copy-vendor.mjs && node --watch server/index.js"
   },
   "engines": {
     "node": ">=20"

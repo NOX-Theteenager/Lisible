@@ -6,6 +6,17 @@
 (function () {
   let pdfjsP = null, mammothP = null;
   const MAX = 10 * 1024 * 1024;
+  const MAX_UPLOAD = 3 * 1024 * 1024;   // limite de requête de l'hébergement (Vercel : 4,5 Mo après encodage)
+
+  /* Réduit une image à 2000 px de côté maximum (JPEG), pour l'envoyer à l'IA sans dépasser la limite. */
+  function shrink(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => { const k = Math.min(1, 2000 / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Image illisible')); };
+      img.src = url;
+    });
+  }
 
   function pdfjs() {
     if (!pdfjsP) pdfjsP = import('/vendor/pdf.min.mjs').then(m => { m.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.mjs'; return m; }).catch(e => { pdfjsP = null; throw e; });
@@ -60,10 +71,14 @@
     if (k === 'doc') throw new Error('Format .doc non pris en charge : enregistrez le fichier en .docx ou en PDF.');
     if (k === 'other') throw new Error('Format non pris en charge : PDF, DOCX, TXT, PNG ou JPG.');
     const out = { kind: k, fileName: file.name, size: file.size, mimeType: k === 'pdf' ? 'application/pdf' : k === 'image' ? (file.type || 'image/jpeg') : k === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'text/plain' };
-    if (k === 'pdf') { Object.assign(out, await pdf(file)); out.data = await base64(file); }
+    if (k === 'pdf') {
+      Object.assign(out, await pdf(file));
+      if (file.size <= MAX_UPLOAD) out.data = await base64(file);
+      else if ((out.text || '').trim().length < 200) throw new Error('PDF scanné trop lourd (3 Mo maximum) : réduisez-le ou envoyez une photo.');
+    }
     else if (k === 'docx') Object.assign(out, await docx(file));
     else if (k === 'txt') out.text = await file.text();
-    else out.data = await base64(file);
+    else { out.data = await shrink(file); out.mimeType = 'image/jpeg'; }
     return out;
   }
 

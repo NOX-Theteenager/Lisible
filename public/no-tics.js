@@ -73,7 +73,7 @@
   }
 
   function tidy(s) {
-    return s.replace(/[ \t]{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').replace(/,\s*,/g, ',').replace(/(^|[.!?]\s+|\n\s*)([a-zà-ÿ])/g, (m, a, b) => a + b.toUpperCase()).replace(/^\s+/, '');
+    return s.replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+([,.])/g, '$1').replace(/(\S)[ \t]*([;:!?])(?=\s|$)/g, '$1 $2').replace(/,\s*,/g, ',').replace(/(^|[.!?]\s+|\n\s*)([a-zà-ÿ])/g, (m, a, b) => a + b.toUpperCase()).replace(/^\s+/, '');
   }
 
   function autoFix(text) {

@@ -12,8 +12,8 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const PORT = Number(process.env.PORT || 3000);
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = (() => { try { return new URL(process.env.SUPABASE_URL).origin; } catch { return ''; } })();
+const SUPABASE_ANON_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const supa = SUPABASE_URL && SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } }) : null;
 
 const app = express();
@@ -73,20 +73,15 @@ app.post('/api/offer/fetch', identify, limiter, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
-/* Fichiers statiques : l'application et les bibliothèques navigateur servies localement. */
-const nm = p => path.join(root, 'node_modules', p);
-app.get('/vendor/pdf.min.mjs', (_q, r) => r.type('text/javascript').sendFile(nm('pdfjs-dist/build/pdf.min.mjs')));
-app.get('/vendor/pdf.worker.min.mjs', (_q, r) => r.type('text/javascript').sendFile(nm('pdfjs-dist/build/pdf.worker.min.mjs')));
-app.get('/vendor/mammoth.browser.min.js', (_q, r) => r.sendFile(nm('mammoth/mammoth.browser.min.js')));
-app.get('/vendor/docx.js', (_q, r) => r.type('text/javascript').sendFile(nm('docx/dist/index.iife.js')));
-app.get('/vendor/jszip.min.js', (_q, r) => r.sendFile(nm('jszip/dist/jszip.min.js')));
-app.get('/vendor/supabase.js', (_q, r) => r.sendFile(nm('@supabase/supabase-js/dist/umd/supabase.js')));
+/* Fichiers statiques (en local ; sur Vercel, public/ est servi par le CDN). */
 app.get('/r/:token', (_q, r) => r.sendFile(path.join(root, 'public', 'review.html')));
 app.use(express.static(path.join(root, 'public'), { extensions: ['html'] }));
 
-app.listen(PORT, () => {
+export default app;
+
+if (!process.env.VERCEL) app.listen(PORT, () => {
   console.log(`Lisible sur http://localhost:${PORT}`);
   if (!process.env.GEMINI_API_KEY) console.warn('⚠ GEMINI_API_KEY manquante : les fonctions IA (Gemini) renverront une erreur.');
   if (!process.env.ANTHROPIC_API_KEY) console.warn('⚠ ANTHROPIC_API_KEY manquante : la rédaction de lettre (Claude) renverra une erreur.');
-  if (!supa) console.warn('⚠ SUPABASE_URL / SUPABASE_ANON_KEY manquantes : comptes et synchronisation désactivés.');
+  if (!supa) console.warn('⚠ SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY manquantes : comptes et synchronisation désactivés.');
 });

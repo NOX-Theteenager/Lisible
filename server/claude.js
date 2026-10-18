@@ -2,12 +2,54 @@ import Anthropic from '@anthropic-ai/sdk';
 import { cvForPrompt, bad } from './gemini.js';
 
 let client = null;
-const MODEL = () => process.env.CLAUDE_MODEL || 'claude-opus-5-5';
+const MODEL = () => process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
 
 function anthropic() {
   if (!process.env.ANTHROPIC_API_KEY) { const e = new Error('Clé ANTHROPIC_API_KEY non configurée sur le serveur.'); e.status = 503; e.expose = true; throw e; }
   if (!client) client = new Anthropic();
   return client;
+}
+
+/* Les sorties structurées de Claude exigent additionalProperties:false sur chaque objet. */
+function strictSchema(node) {
+  if (Array.isArray(node)) return node.map(strictSchema);
+  if (!node || typeof node !== 'object') return node;
+  const out = {};
+  for (const [k, v] of Object.entries(node)) out[k] = strictSchema(v);
+  if (out.type === 'object') out.additionalProperties = false;
+  return out;
+}
+
+/* Convertit les « parts » Gemini (texte, image, PDF) en blocs de contenu Claude. */
+function toContent(parts) {
+  const blocks = [];
+  for (const p of parts || []) {
+    if (p.text) blocks.push({ type: 'text', text: p.text });
+    else if (p.inlineData) {
+      const { mimeType, data } = p.inlineData;
+      if (mimeType === 'application/pdf') blocks.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } });
+      else if (/^image\/(jpeg|png|gif|webp)$/.test(mimeType)) blocks.push({ type: 'image', source: { type: 'base64', media_type: mimeType, data } });
+    }
+  }
+  // Les fichiers passent avant le texte, comme le recommande l'API.
+  return blocks.sort((a, b) => (a.type === 'text') - (b.type === 'text'));
+}
+
+/* Remplaçant de Gemini : mêmes consignes, mêmes entrées, même schéma JSON. */
+export async function claudeJSON({ system, parts, schema }) {
+  const res = await anthropic().beta.messages.create({
+    model: MODEL(),
+    max_tokens: 16000,
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema: strictSchema(schema) } },
+    system,
+    messages: [{ role: 'user', content: toContent(parts) }],
+  });
+  if (res.stop_reason === 'refusal') { const e = new Error('La demande a été refusée par le modèle.'); e.status = 422; e.expose = true; throw e; }
+  if (res.stop_reason === 'max_tokens') { const e = new Error('Réponse trop longue : réessayez avec un document plus court.'); e.status = 502; e.expose = true; throw e; }
+  const txt = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  try { return JSON.parse(txt); } catch { const e = new Error('Réponse IA illisible'); e.status = 502; throw e; }
 }
 
 const TONES = {

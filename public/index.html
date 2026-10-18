@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lisible · CV conformes ATS</title>
+<meta name="description" content="Créez, importez et adaptez des CV conformes aux ATS, avec lettre de motivation et préparation d’entretien.">
+<meta name="theme-color" content="#1C1915">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lisible">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));</script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -68,7 +79,6 @@ html[data-contrast="high"][data-theme="dark"]{--mu:#d6cfc2;--fa:#b3ab9e;--line:#
         <span style="font-weight:600;font-size:12.5px;line-height:1.3">{{ versionName }}</span>
       </div>
     </div>
-    <button onClick="{{ toggleTheme }}" style="height:34px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:transparent;color:var(--inkfg);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.07)">{{ themeLabel }}</button>
   </div>
 </aside>
 
@@ -670,7 +680,6 @@ html[data-contrast="high"][data-theme="dark"]{--mu:#d6cfc2;--fa:#b3ab9e;--line:#
           <div style="display:flex;gap:10px"><span style="font-family:'JetBrains Mono',monospace;color:var(--fa)">04</span><span style="color:var(--mu);line-height:1.45">Conversion en version ATS, enregistrée comme nouvelle version.</span></div>
           <label style="align-self:flex-start;display:flex;align-items:center;height:34px;padding:0 16px;border:0;border-radius:999px;background:var(--btn);color:var(--btnfg);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap"><input type="file" accept=".pdf" onChange="{{ onLinkedin }}" style="display:none">Importer mon profil LinkedIn (PDF)</label>
           <span style="font-size:11.5px;color:var(--mu);line-height:1.45;margin-top:-4px">Sur LinkedIn : votre profil → « Plus » → « Enregistrer au format PDF ».</span>
-          <button onClick="{{ useSample }}" style="align-self:flex-start;height:30px;padding:0 12px;border:1px solid var(--line2);border-radius:999px;background:var(--panel);color:var(--tx);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;flex-shrink:0" style-hover="background:var(--sub)">Essayer avec un CV d'exemple</button>
         </div>
       </div>
     </sc-if>
@@ -1460,7 +1469,6 @@ html[data-contrast="high"][data-theme="dark"]{--mu:#d6cfc2;--fa:#b3ab9e;--line:#
         </select>
         <div style="display:flex;gap:4px;padding:3px;border:1px solid rgba(255,255,255,.18);border-radius:999px"><sc-for list="{{ langQuick }}" as="t"><button onClick="{{ t.go }}" style="flex:1;height:38px;border:0;border-radius:999px;background:{{ t.dbg }};color:{{ t.dfg }};font:inherit;font-size:13px;font-weight:700;cursor:pointer">{{ t.long }}</button></sc-for></div>
         <button onClick="{{ openShare }}" style="height:44px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:transparent;color:var(--inkfg);font:inherit;font-size:14px;font-weight:600;cursor:pointer">Partager pour relecture</button>
-        <button onClick="{{ toggleTheme }}" style="height:44px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:transparent;color:var(--inkfg);font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ themeLabel }}</button>
       </div>
     </div>
   </div>
@@ -1640,9 +1648,8 @@ function docHtml(cv,tpl){const c=cv.contact;let h=`<html xmlns:o="urn:schemas-mi
   else secText(cv,k).forEach(l=>{h+='<p>'+esc(l)+'</p>'});});
  return h+'</body></html>';}
 const KEY='cvatspro-state-v3';
-const UI_FR={home:'Accueil',editor:'Éditeur',import:'Importer un CV',adapt:'Adapter à une offre',letter:'Lettre de motivation',review:'Relecture humaine',interview:'Entretien',apps:'Candidatures',versions:'Versions',settings:'Paramètres'};
-const UI_EN={home:'Home',editor:'Editor',import:'Import a resume',adapt:'Tailor to a job',letter:'Cover letter',review:'Human proofreading',interview:'Interview prep',apps:'Applications',versions:'Versions',settings:'Settings'};
-const FREE_TEXT='';
+const UI_FR={home:'Accueil',editor:'Éditeur',import:'Importer un CV',adapt:'Adapter à une offre',letter:'Lettre de motivation',interview:'Entretien',apps:'Candidatures',versions:'Versions',settings:'Paramètres'};
+const UI_EN={home:'Home',editor:'Editor',import:'Import a resume',adapt:'Tailor to a job',letter:'Cover letter',interview:'Interview prep',apps:'Applications',versions:'Versions',settings:'Settings'};
 function findPh(cv){const re=/\[[^\]\n]{1,40}\]/g,out=[];const scan=(t,where,key)=>{((t||'').match(re)||[]).forEach(m=>out.push({where,text:m,key}))};scan(cv.summary,'Résumé','summary');cv.experiences.forEach((e,i)=>e.bullets.forEach(b=>scan(b,e.company||'Expérience '+(i+1),'experience')));cv.projects.forEach(p=>scan(p.desc,'Projets','projects'));return out;}
 const parseFr=d=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d||'');return m?new Date(+m[3],+m[2]-1,+m[1]):null;};
 const dueOf=a=>{if(a.status!=='sent'||a.relanced)return 0;const d=parseFr(a.date);if(!d)return 0;const days=Math.floor((Date.now()-d.getTime())/86400000);return days>=7?days:0;};
@@ -1653,7 +1660,6 @@ const settingsOf=s=>({theme:s.theme,tpl:s.tpl,accent:s.accent,font:s.font,fsize:
 function blankVersion(name){const t=Date.now(),cv=emptyCv();return{id:uid(),name:name||'Mon CV',tag:'Général',updated:t,cv,history:[{id:uid(),t,label:'Création',cv:clone(cv)}]};}
 const whenReady=(test,cb,n=0)=>{if(test())cb();else if(n<80)setTimeout(()=>whenReady(test,cb,n+1),100);};
 const errMsg=e=>(e&&e.message)||'Une erreur est survenue';
-const SAMPLE_CV=()=>{const c=baseCv();c.experiences[1].start='Sept. 2019';return'MON PARCOURS\n'+cvText(c).replace('RÉSUMÉ PROFESSIONNEL','À PROPOS').replace('EXPÉRIENCE PROFESSIONNELLE','MON PARCOURS PRO').replace('COMPÉTENCES','CE QUE JE SAIS FAIRE');};
 const APP_COLS=[['todo','À envoyer'],['sent','Envoyée'],['interview','Entretien'],['offer','Offre'],['rejected','Refusée']];
 
 class Component extends DCLogic {
@@ -1662,8 +1668,8 @@ class Component extends DCLogic {
     let saved=null;try{saved=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
     const now=Date.now(),day=86400000;
     const first=blankVersion('Mon CV');const W=saved&&saved.work||{};
-    return{versions:saved&&saved.versions&&saved.versions.length?saved.versions:[first],currentId:saved&&saved.currentId||first.id,theme:saved&&saved.theme||'light',
-      screen:'home',step:0,paperH:0,letFont:saved&&saved.letFont||'Arial',letSize:saved&&saved.letSize||11,auth:(()=>{let a=null;try{a=JSON.parse(localStorage.getItem(LS_ACCT)||'null')}catch(e){}return{user:a&&a.user||null,guest:!!(a&&a.guest),ready:false,mode:'in',email:'',pw:'',name:'',showPw:false,busy:false,err:'',info:'',gEmail:'',open:false}})(),font:saved&&saved.font||'',fsize:saved&&saved.fsize||null,wide:typeof window!=='undefined'&&window.innerWidth>=820,comments:[],share:{open:false,link:'',perm:'comment',expiry:'7',anon:false,created:0},mobile:typeof window!=='undefined'&&window.innerWidth<820,navOpen:false,mTab:'form',pvW:0,lang:saved&&saved.lang||'fr',apps:saved&&saved.apps||[],newApp:null,diffWith:null,dense:false,rv:{src:'summary',free:FREE_TEXT,proposal:null,busy:false,notes:[]},iv:W.iv||{phase:'idle',qs:[],open:0,pitch:'',li:null},sync:'local',sugAlts:{},sugBusy:null,sumBusy:false,skillAI:null,ivBusy:false,acct:{email:'',status:'out'},prefs:saved&&saved.prefs||{motion:false,contrast:false,anonDefault:false,autoClean:true,notif:false,ui:'md'},confirmDel:false,mq:{},open:{},tpl:saved&&saved.tpl||'classique',accent:saved&&saved.accent||'#e8481c',galleryOpen:false,rulesOpen:false,anon:false,pv:'visuel',sug:null,sumSug:false,libOpen:false,libSector:'Tech',libExp:null,skillDraft:'',
+    return{versions:saved&&saved.versions&&saved.versions.length?saved.versions:[first],currentId:saved&&saved.currentId||first.id,theme:'light',
+      screen:(()=>{try{const q=new URLSearchParams(location.search).get('screen');return['import','adapt','letter','editor','apps','interview'].includes(q)?q:'home'}catch(e){return'home'}})(),step:0,paperH:0,letFont:saved&&saved.letFont||'Arial',letSize:saved&&saved.letSize||11,auth:(()=>{let a=null;try{a=JSON.parse(localStorage.getItem(LS_ACCT)||'null')}catch(e){}return{user:a&&a.user||null,guest:!!(a&&a.guest),ready:false,mode:'in',email:'',pw:'',name:'',showPw:false,busy:false,err:'',info:'',gEmail:'',open:false}})(),font:saved&&saved.font||'',fsize:saved&&saved.fsize||null,wide:typeof window!=='undefined'&&window.innerWidth>=820,comments:[],share:{open:false,link:'',perm:'comment',expiry:'7',anon:false,created:0},mobile:typeof window!=='undefined'&&window.innerWidth<820,navOpen:false,mTab:'form',pvW:0,lang:saved&&saved.lang||'fr',apps:saved&&saved.apps||[],newApp:null,diffWith:null,dense:false,iv:W.iv||{phase:'idle',qs:[],open:0,pitch:'',li:null},sync:'local',sugAlts:{},sugBusy:null,sumBusy:false,skillAI:null,ivBusy:false,acct:{email:'',status:'out'},prefs:saved&&saved.prefs||{motion:false,contrast:false,anonDefault:false,autoClean:true,notif:false,ui:'md'},confirmDel:false,mq:{},open:{},tpl:saved&&saved.tpl||'classique',accent:saved&&saved.accent||'#e8481c',galleryOpen:false,rulesOpen:false,anon:false,pv:'visuel',sug:null,sumSug:false,libOpen:false,libSector:'Tech',libExp:null,skillDraft:'',
       imp:{phase:'idle',mode:'full',file:null,step:0,drag:false,steps:[],res:null},ad:{phase:W.ad&&W.ad.result&&W.ad.analysis?'result':'input',src:'text',url:'',img:null,srcPhase:'idle',busyPct:0,info:null,offer:W.ad&&W.ad.offer||'',analysis:W.ad&&W.ad.analysis||null,acc:W.ad&&W.ad.acc||{},sk:W.ad&&W.ad.sk||{}},
       letter:{mode:W.letter&&W.letter.mode||'new',company:W.letter&&W.letter.company||'',role:W.letter&&W.letter.role||'',tone:W.letter&&W.letter.tone||'Sobre',phase:W.letter&&W.letter.text?'done':'idle',text:W.letter&&W.letter.text||'',offerText:W.letter&&W.letter.offerText||'',src:'offer',url:'',img:null,srcPhase:'idle',busyPct:0,info:null,old:W.letter&&W.letter.old||'',oldName:'',diag:null},exp:{open:false,fmt:'docx',name:''},toast:'',renaming:null,renameText:'',histSel:null};
   }
@@ -1683,7 +1689,7 @@ class Component extends DCLogic {
   persist(ps,s){const keys=['versions','currentId','theme','tpl','accent','font','fsize','letFont','letSize','apps','lang','prefs','ad','letter','iv'];if(!keys.some(k=>ps[k]!==s[k]))return;
     clearTimeout(this._st);this._st=setTimeout(()=>{const st=this.state,set=settingsOf(st);try{localStorage.setItem(KEY,JSON.stringify({versions:st.versions,apps:st.apps,...set}))}catch(e){}},400);
     const u=s.auth.user;if(!u||!this._pulled||!window.CVStore)return;clearTimeout(this._sy);this._sy=setTimeout(()=>{const st=this.state;if(!st.auth.user)return;this.setState({sync:'saving'});window.CVStore.push(st.auth.user.id,{versions:st.versions,apps:st.apps,settings:settingsOf(st)}).then(()=>this.setState({sync:'ok'})).catch(e=>{console.error(e);this.setState({sync:'error'});if(!this._syncWarned){this._syncWarned=1;this.toast('Synchronisation impossible : vos modifications restent sur cet appareil');}});},1200);}
-  applySettings(set){const W=set.work||{},o={};['theme','tpl','accent','font','fsize','letFont','letSize','lang','prefs'].forEach(k=>{if(set[k]!=null)o[k]=set[k]});
+  applySettings(set){const W=set.work||{},o={};['tpl','accent','font','fsize','letFont','letSize','lang','prefs'].forEach(k=>{if(set[k]!=null)o[k]=set[k]});
     this.setState(st=>({...o,ad:W.ad?{...st.ad,offer:W.ad.offer||'',analysis:W.ad.analysis||null,acc:W.ad.acc||{},sk:W.ad.sk||{},phase:W.ad.result&&W.ad.analysis?'result':'input'}:st.ad,
       letter:W.letter?{...st.letter,company:W.letter.company||'',role:W.letter.role||'',tone:W.letter.tone||'Sobre',mode:W.letter.mode||'new',text:W.letter.text||'',offerText:W.letter.offerText||'',old:W.letter.old||'',phase:W.letter.text?'done':'idle'}:st.letter,
       iv:W.iv||st.iv}));}
@@ -1784,7 +1790,7 @@ class Component extends DCLogic {
     const filled={contact:!!(cv.contact.name&&cv.contact.email),summary:!!cv.summary.trim(),experience:cv.experiences.some(e=>e.role),education:cv.education.some(e=>e.degree),skills:cv.skills.length>0,languages:cv.languages.length>0,projects:cv.projects.length>0,certifications:cv.certifications.length>0};
     const meta={contact:'',summary:wc(cv.summary)+' mots',experience:cv.experiences.length+' poste(s)',education:cv.education.length+' diplôme(s)',skills:cv.skills.length+' compétences',languages:cv.languages.length+' langue(s)',projects:cv.projects.length+' projet(s)',certifications:cv.certifications.length+' certification(s)'};
     const T=s.lang==='en'?UI_EN:UI_FR;
-    const titles={review:[T.review,'Repérez et supprimez les tics d’écriture IA : formules creuses, clichés, passif, rythme'],interview:[T.interview,'Questions probables, réponses STAR, pitch de 30 secondes et profil LinkedIn'],apps:[T.apps,'Suivez chaque candidature et comparez votre CV à plusieurs offres'],settings:[T.settings,'Compte, langue, données personnelles et accessibilité'],home:['Accueil','Créez, importez ou adaptez un CV conforme aux ATS'],editor:['Éditeur','Parcours guidé, aperçu et score de conformité en direct'],import:[s.imp.mode==='simple'?'Mise en conformité':'Importer un CV','Extraction, rapport de conformité et conversion'],adapt:["Adapter à une offre",'Texte, lien, image ou PDF : l’IA compare l’annonce à votre CV'],letter:['Lettre de motivation','Rédigez-en une nouvelle ou améliorez la vôtre, à partir de l’offre visée'],versions:['Versions','Sauvegarde, duplication, renommage et historique']};
+    const titles={interview:[T.interview,'Questions probables, réponses STAR, pitch de 30 secondes et profil LinkedIn'],apps:[T.apps,'Suivez chaque candidature et comparez votre CV à plusieurs offres'],settings:[T.settings,'Compte, langue, données personnelles et accessibilité'],home:['Accueil','Créez, importez ou adaptez un CV conforme aux ATS'],editor:['Éditeur','Parcours guidé, aperçu et score de conformité en direct'],import:[s.imp.mode==='simple'?'Mise en conformité':'Importer un CV','Extraction, rapport de conformité et conversion'],adapt:["Adapter à une offre",'Texte, lien, image ou PDF : l’IA compare l’annonce à votre CV'],letter:['Lettre de motivation','Rédigez-en une nouvelle ou améliorez la vôtre, à partir de l’offre visée'],versions:['Versions','Sauvegarde, duplication, renommage et historique']};
     const navDef=[['home',T.home,''],['editor',T.editor,an.score+''],['import',T.import,''],['adapt',T.adapt,''],['letter',T.letter,''],['interview',T.interview,''],['apps',T.apps,s.apps.length+''],['versions',T.versions,s.versions.length+''],['settings',T.settings,'']];
     const nav=navDef.map(([k,label,m])=>{const on=s.screen===k;return{label,meta:m,bg:on?'rgba(255,255,255,.1)':'transparent',op:on?1:.72,dot:on?'var(--ac)':'transparent',fw:on?600:500,go:()=>this.go(k)}});
     const seg=(on)=>({bg:on?'var(--btn)':'transparent',fg:on?'var(--btnfg)':'var(--mu)'});
@@ -1862,11 +1868,6 @@ class Component extends DCLogic {
     const srcH=key=>({onUrl:ev=>{const val=ev.target.value;this.setState(st=>({[key]:{...st[key],url:val}}))},runLink:()=>{const u=(s[key].url||'').trim();if(!u){this.toast('Collez d’abord un lien');return;}this.runSrc(key,'link',u)},over:ev=>ev.preventDefault(),dropImg:ev=>{ev.preventDefault();const fl=ev.dataTransfer.files&&ev.dataTransfer.files[0];if(fl)this.loadSrcImg(key,fl)},onImg:ev=>{const fl=ev.target.files&&ev.target.files[0];ev.target.value='';if(fl)this.loadSrcImg(key,fl)},onPdf:ev=>{const fl=ev.target.files&&ev.target.files[0];ev.target.value='';if(fl)this.runSrc(key,'pdf',fl)}});
     // ---- relecture humaine
     const NTx=NT(),ticBadge=(t)=>{const a=NTx.analyze(t||''),n=a.hits.length;return{a,label:n?n+' tic'+(n>1?'s':'')+' d’écriture · corriger':'Écriture naturelle ✓',bg:n?'var(--ais)':'var(--oks)',fg:n?'var(--ai)':'var(--ok)'}};
-    const R=s.rv,srcText={summary:cv.summary,letter:s.letter.text||s.letter.old||'',pitch:s.iv.pitch||'',free:R.free}[R.src]||'';
-    const rvSet=val=>{if(R.src==='summary')mut(c=>{c.summary=val});else if(R.src==='letter')this.setState(st=>({letter:st.letter.text?{...st.letter,text:val}:{...st.letter,old:val}}));else if(R.src==='pitch')this.setState(st=>({iv:{...st.iv,pitch:val}}));else this.setState(st=>({rv:{...st.rv,free:val}}));};
-    const ra=NTx.analyze(srcText),CATS=NTx.CATS||{};
-    const pa=R.proposal?NTx.analyze(R.proposal):null;
-    const goRv=src=>()=>this.setState(st=>({screen:'review',rv:{...st.rv,src,proposal:null}}));
     const sumTics=ticBadge(cv.summary),letTics=ticBadge(s.letter.text);
     // ---- cohérence
     const cohItems=[];const ex=cv.experiences.map(e=>({e,s:toMonths(e.start),en:toMonths(e.end)})).filter(x=>x.s!=null).sort((a,b)=>b.s-a.s);
@@ -1935,7 +1936,7 @@ class Component extends DCLogic {
       onDragOver:ev=>{ev.preventDefault();if(!ip.drag)this.setState(st=>({imp:{...st.imp,drag:true}}))},onDragLeave:()=>this.setState(st=>({imp:{...st.imp,drag:false}})),
       onDrop:ev=>{ev.preventDefault();const f=ev.dataTransfer.files&&ev.dataTransfer.files[0];this.setState(st=>({imp:{...st.imp,drag:false}}));if(f)this.startImport(f)},
       onImpFile:ev=>{const f=ev.target.files&&ev.target.files[0];if(f)this.startImport(f);ev.target.value=''},
-      useSample:()=>this.startImport(new File([SAMPLE_CV()],'CV_exemple.txt',{type:'text/plain'})),impSteps,
+      impSteps,
       issues:(IR?IR.issues:[]).map(i=>({...i,bg:(sevC[i.sev]||sevC.Mineur)[0],fg:(sevC[i.sev]||sevC.Mineur)[1]})),mapping:IR?IR.mapping:[],rawExtract:IR?IR.rawText:'',onLinkedin:ev=>{const fl=ev.target.files&&ev.target.files[0];ev.target.value='';if(fl)this.startImport(fl,'linkedin');},
       resetImport:()=>this.setState(st=>({imp:{...st.imp,phase:'idle',step:0,file:null}})),convertImport:()=>this.setState(st=>({imp:{...st.imp,phase:'done'}})),
       impAfter:IR?analyze(IR.cv,tpl).score:0,
@@ -1967,23 +1968,10 @@ class Component extends DCLogic {
       histName:sel.name,hist,takeSnapshot:()=>{this.setState({currentId:sel.id},()=>{this.snapshot('Instantané manuel');this.toast('Instantané enregistré')})},
       exp:{open:E.open,name:E.name,ext:'.'+E.fmt},fmts,expChecks,
       onExpName:ev=>{const val=ev.target.value;this.setState(st=>({exp:{...st.exp,name:val}}))},closeExport:()=>this.setState(st=>({exp:{...st.exp,open:false}})),stop:ev=>ev.stopPropagation(),doExport:()=>this.exportNow(),
-      isReview:s.screen==='review',isInterview:s.screen==='interview',isApps:s.screen==='apps',isSettings:s.screen==='settings',
+      isInterview:s.screen==='interview',isApps:s.screen==='apps',isSettings:s.screen==='settings',
       sumTics,letTics,reviewSummary:()=>{if(!sumTics.a.hits.length){this.toast('Aucun tic détecté dans le résumé');return;}if(!window.CVAI)return;this.toast('Réécriture en cours…');window.CVAI.humanize(cv.summary,{context:'summary',lang:cv.lang}).then(p=>this.setState({sumAlt:clean(p.text),sumSug:true})).catch(e=>this.toast(errMsg(e)));},
       reviewLetter:()=>{if(!letTics.a.hits.length){this.toast('Lettre déjà propre');return;}if(!window.CVAI)return;const n=letTics.a.hits.length;this.toast('Réécriture en cours…');window.CVAI.humanize(s.letter.text,{context:'letter'}).then(p=>{this.setState(st=>({letter:{...st.letter,text:clean(p.text)}}));this.toast(n+' tic(s) retiré(s) de la lettre');}).catch(e=>this.toast(errMsg(e)));},
       reviewPitch:()=>{const n=NTx.analyze(s.iv.pitch).hits.length;if(!n){this.toast('Pitch déjà propre');return;}window.CVAI&&window.CVAI.humanize(s.iv.pitch,{context:'pitch'}).then(p=>{this.setState(st=>({iv:{...st.iv,pitch:clean(p.text)}}));this.toast(n+' tic(s) retiré(s)');}).catch(e=>this.toast(errMsg(e)));},coh,
-      rvTabs:[['summary','Résumé du CV'],['letter','Lettre'],['pitch','Pitch'],['free','Texte libre']].map(([k,l])=>({label:l,...seg(R.src===k),go:()=>this.setState(st=>({rv:{...st.rv,src:k,proposal:null}}))})),
-      rv:{text:srcText,total:ra.total,verdict:ra.verdict,vBg:ra.total>=42?'#5fd39a':ra.total>=35?'#eaa94c':'#f47b70',vFg:'#12110f',meta:ra.words+' mots · '+ra.sentences+' phrases',hitCount:ra.hits.length,metronome:ra.metronome,clean:!ra.hits.length&&!ra.metronome&&!!srcText.trim(),
-        srcName:{summary:'résumé du CV, modifié en direct',letter:'lettre de motivation',pitch:'pitch d’entretien',free:'texte libre'}[R.src],rewriteLabel:R.busy?'Réécriture…':'Réécrire sans tics',hasProposal:!!R.proposal,proposal:R.proposal||'',propScore:pa?pa.total:0,propVerdict:pa?pa.verdict:'',notes:(R.notes||[]).map(t=>({text:t})),
-        applyLabel:{summary:'Retour à l’éditeur',letter:'Retour à la lettre',pitch:'Retour à l’entretien',free:'Copier le texte'}[R.src],applyOp:1},
-      onRvText:ev=>rvSet(ev.target.value),
-      rvSegs:NTx.segments(srcText,ra.hits).map(g=>({text:g.text,plain:!g.hit,hit:!!g.hit,bg:g.hit?(CATS[g.cat]||{}).bg:'',color:g.hit?(CATS[g.cat]||{}).color:'',title:g.label||''})),
-      rvDims:[['Direction','direction'],['Rythme','rythme'],['Confiance','confiance'],['Authenticité','authenticite'],['Densité','densite']].map(([l,k])=>{const val=ra.scores[k];return{label:l,val,pct:val*10,color:val>=8?'#5fd39a':val>=6?'#eaa94c':'#f47b70'}}),
-      rvCats:Object.keys(CATS).map(k=>({label:CATS[k].label,count:ra.hits.filter(h=>h.cat===k).length,color:CATS[k].color,bg:CATS[k].bg})).filter(c=>c.count),
-      rvHits:ra.hits.slice(0,30).map(h=>({label:h.label,match:h.match.length>90?h.match.slice(0,90)+'…':h.match,tip:h.tip,alt:h.alt||'',hasAlt:!!h.alt,fixable:h.fixable,color:(CATS[h.cat]||{}).color||'var(--ai)',fix:()=>rvSet(NTx.fixOne(srcText,h))})),
-      rvAuto:()=>{const r=NTx.autoFix(srcText);rvSet(r.text);this.toast(r.changes.length?r.changes.length+' correction(s) appliquée(s)':'Rien à nettoyer automatiquement : les tics restants demandent un fait précis');},
-      rvRewrite:()=>{if(!srcText.trim()||!window.CVAI){this.toast('Rien à réécrire');return;}this.setState(st=>({rv:{...st.rv,busy:true}}));window.CVAI.humanize(srcText,{context:R.src}).then(p=>this.setState(st=>({rv:{...st.rv,busy:false,proposal:p.text,notes:p.notes}}))).catch(e=>{this.setState(st=>({rv:{...st.rv,busy:false}}));this.toast(errMsg(e));});},
-      rvUseProposal:()=>{rvSet(R.proposal);this.setState(st=>({rv:{...st.rv,proposal:null}}));this.toast('Version réécrite reprise');},rvDropProposal:()=>this.setState(st=>({rv:{...st.rv,proposal:null}})),
-      rvApply:()=>{if(R.src==='free'){try{navigator.clipboard.writeText(srcText)}catch(e){}this.toast('Texte copié');}else this.go({summary:'editor',letter:'letter',pitch:'interview'}[R.src],R.src==='summary'?{step:1}:{});},
       diffWith:s.diffWith||'',pickDiff:ev=>this.setState({diffWith:ev.target.value||null}),diffOptions:s.versions.filter(x=>x.id!==v.id).map(x=>({id:x.id,name:x.name})),diff,
       exportPack:()=>this.exportPack(),
       appStats:[[s.apps.length,'candidatures'],[s.apps.filter(a=>a.status!=='todo').length,'envoyées'],[s.apps.filter(a=>a.status==='interview'||a.status==='offer').length,'en entretien ou offre']].map(([n,label])=>({n,label})),appCols,appMatch,appCount:s.apps.length,

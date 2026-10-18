@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 let client = null;
-const MODEL = () => process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL = () => process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 function ai() {
   if (!process.env.GEMINI_API_KEY) { const e = new Error('Clé GEMINI_API_KEY non configurée sur le serveur.'); e.status = 503; e.expose = true; throw e; }
@@ -15,27 +15,44 @@ Aucun cliché ni formule creuse (« passionné », « dynamique », « force de 
 Aucun tiret cadratin pour rythmer, pas de question rhétorique, pas d'énumération systématique par trois.
 N'invente JAMAIS un chiffre, une entreprise, un outil ou un résultat : utilise uniquement les faits fournis. Si une donnée manque, laisse un repère entre crochets comme [X %] ou [nombre d'utilisateurs].`;
 
+/* Délai maximal accordé à Gemini avant de basculer sur Claude. */
+const GEMINI_TIMEOUT = () => Number(process.env.GEMINI_TIMEOUT_MS || 45_000);
+
+function parseJSON(txt) {
+  try { return JSON.parse(txt); } catch {
+    const m = /\{[\s\S]*\}/.exec(txt || '');
+    if (m) return JSON.parse(m[0]);
+    throw new Error('Réponse JSON illisible');
+  }
+}
+
 /**
- * Appel Gemini avec sortie JSON contrainte.
+ * Sortie JSON contrainte. Gemini d'abord (une seule tentative) ; au moindre problème
+ * (quota, saturation, délai dépassé, réponse illisible, clé absente), bascule directe sur Claude.
  * parts : tableau de { text } ou { inlineData: { mimeType, data } }.
  */
 export async function genJSON({ system, parts, schema, temperature = 0.4 }) {
-  const res = await ai().models.generateContent({
-    model: MODEL(),
-    contents: [{ role: 'user', parts }],
-    config: {
-      systemInstruction: system,
-      temperature,
-      responseMimeType: 'application/json',
-      responseJsonSchema: schema,
-    },
-  });
-  const txt = res.text || '';
-  try { return JSON.parse(txt); } catch {
-    const m = /\{[\s\S]*\}/.exec(txt);
-    if (m) return JSON.parse(m[0]);
-    const e = new Error('Réponse IA illisible'); e.status = 502; throw e;
+  let geminiError = null;
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const res = await Promise.race([
+        ai().models.generateContent({
+          model: MODEL(),
+          contents: [{ role: 'user', parts }],
+          config: { systemInstruction: system, temperature, responseMimeType: 'application/json', responseJsonSchema: schema },
+        }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Délai Gemini dépassé')), GEMINI_TIMEOUT())),
+      ]);
+      return parseJSON(res.text || '');
+    } catch (e) { geminiError = e; }
   }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    const e = new Error(geminiError ? 'Le service d’IA est momentanément indisponible. Réessayez dans une minute.' : 'Aucune clé d’IA configurée sur le serveur.');
+    e.status = 503; e.expose = true; throw e;
+  }
+  if (geminiError) console.warn('[ia] Gemini indisponible (' + String(geminiError.message).slice(0, 160) + ') : bascule sur Claude');
+  const { claudeJSON } = await import('./claude.js');
+  return claudeJSON({ system, parts, schema });
 }
 
 export const S = {
