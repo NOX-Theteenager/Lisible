@@ -12,6 +12,8 @@ const files = {
   'docx.js': 'docx/dist/index.iife.js',
   'jszip.min.js': 'jszip/dist/jszip.min.js',
   'supabase.js': '@supabase/supabase-js/dist/umd/supabase.js',
+  'react.production.min.js': 'react/umd/react.production.min.js',
+  'react-dom.production.min.js': 'react-dom/umd/react-dom.production.min.js',
 };
 for (const [name, src] of Object.entries(files)) fs.copyFileSync(path.join(root, 'node_modules', src), path.join(out, name));
 console.log('vendor : ' + Object.keys(files).length + ' fichiers copiés dans public/vendor');

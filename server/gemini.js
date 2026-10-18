@@ -33,7 +33,9 @@ function parseJSON(txt) {
  */
 export async function genJSON({ system, parts, schema, temperature = 0.4 }) {
   let geminiError = null;
-  if (process.env.GEMINI_API_KEY) {
+  // RGPD : sur le palier gratuit, Google peut utiliser les contenus pour entraîner ses modèles.
+  // Gemini n'est donc utilisé que si la facturation est déclarée active (GEMINI_PAID_TIER=true).
+  if (process.env.GEMINI_API_KEY && process.env.GEMINI_PAID_TIER === 'true') {
     try {
       const res = await Promise.race([
         ai().models.generateContent({

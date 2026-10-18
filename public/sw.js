@@ -1,12 +1,12 @@
 /* Service worker Lisible : application disponible hors ligne, mises à jour en arrière-plan.
    Les appels /api (IA) et Supabase passent toujours par le réseau. */
-const VERSION = 'lisible-v1';
+const VERSION = 'lisible-v3';
 const SHELL = [
-  '/', '/index.html', '/review.html', '/manifest.webmanifest',
+  '/', '/index.html', '/review.html', '/confidentialite.html', '/conditions.html', '/mentions-legales.html', '/legal.css', '/manifest.webmanifest',
   '/support.js', '/api.js', '/extract.js', '/store.js', '/no-tics.js', '/ai-adapter.js', '/exporters.js', '/i18n.js', '/auth-adapter.js',
-  '/vendor/supabase.js', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-32.png',
+  '/vendor/supabase.js', '/vendor/react.production.min.js', '/vendor/react-dom.production.min.js', '/fonts/fonts.css', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-32.png',
 ];
-const CDN = ['unpkg.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const CDN = [];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

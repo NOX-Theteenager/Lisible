@@ -86,5 +86,13 @@
     reset();
   }
 
-  window.CVStore = { pull, push, reset, createShare, revokeShare, activeShare, comments, setCommentDone, deleteAll };
+  /* Droit à l'effacement : supprime le compte Supabase ; toutes les données liées partent en cascade. */
+  async function deleteAccount() {
+    const c = await sb();
+    chk(await c.rpc('delete_my_account'));
+    reset();
+    try { await c.auth.signOut({ scope: 'local' }); } catch (e) {}
+  }
+
+  window.CVStore = { pull, push, reset, createShare, revokeShare, activeShare, comments, setCommentDone, deleteAll, deleteAccount };
 })();

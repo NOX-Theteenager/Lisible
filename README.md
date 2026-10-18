@@ -40,7 +40,7 @@ npm start              # http://localhost:3000 (copie aussi les bibliothèques d
 ### 2. Supabase
 
 1. Créez un projet sur https://supabase.com.
-2. **SQL Editor** → collez le contenu de `supabase/schema.sql` → *Run*.
+2. **SQL Editor** → collez le contenu de `supabase/schema.sql` → *Run*, puis celui de `supabase/002_rgpd.sql` (suppression de compte et purges automatiques) → *Run*.
 3. **Project Settings → Data API** : copiez *Project URL* dans `SUPABASE_URL`. **Project Settings → API Keys** : copiez la *Publishable key* (`sb_publishable_…`) dans `SUPABASE_PUBLISHABLE_KEY` (la clé *anon public* de l’onglet *Legacy API keys* fonctionne aussi).
 4. **Authentication → URL Configuration** : *Site URL* = l'adresse de l'application (`http://localhost:3000` en local), et ajoutez la même adresse dans *Redirect URLs*.
 5. Connexion Google (facultatif) : **Authentication → Providers → Google**, renseignez l'identifiant et le secret OAuth créés dans Google Cloud Console. L'URI de redirection autorisée à déclarer chez Google est `https://<votre-projet>.supabase.co/auth/v1/callback`.
@@ -74,3 +74,12 @@ supabase/schema.sql   tables, règles de sécurité (RLS), fonctions de partage
 - Les appels IA sont limités par minute (`RATE_LIMIT_GUEST`, `RATE_LIMIT_USER`) ; les utilisateurs connectés sont identifiés par leur jeton Supabase.
 - Les consignes envoyées aux modèles interdisent d'inventer des chiffres : quand une donnée manque, un repère `[X %]` est inséré, et l'export du CV reste bloqué tant qu'il en reste.
 - Pour la mise en ligne hors Vercel, n'importe quel hébergeur Node convient (Render, Railway, Fly.io, VPS…) : définissez les mêmes variables d'environnement et ajoutez l'URL publique dans Supabase (étape 4).
+## Données personnelles et sécurité
+
+- Pages légales : `/confidentialite`, `/conditions`, `/mentions-legales`. Les champs surlignés `[à compléter]` (identité de l'éditeur, contact, région Supabase) doivent être renseignés avant l'ouverture au public.
+- `GEMINI_PAID_TIER=true` uniquement si la facturation est activée sur la clé Gemini : sur le palier gratuit, Google peut utiliser les contenus pour entraîner ses modèles. Tant que la valeur n'est pas `true`, toutes les demandes d'IA passent par Claude.
+- Aucun service tiers n'est contacté au chargement : polices et bibliothèques (React, pdf.js, mammoth, docx, JSZip, Supabase) sont servies par le site.
+- En-têtes de sécurité (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) définis dans `vercel.json` et `server/security.js`.
+- Droit à l'effacement : Paramètres → « Supprimer mon compte et mes données » (fonction SQL `delete_my_account`). Portabilité : export JSON complet.
+- Conservation : comptes inactifs supprimés après 3 ans, liens de relecture 30 jours après expiration (tâches `pg_cron` quotidiennes).
+- `npm audit` signale une vulnérabilité modérée dans `sprintf-js` (dépendance de l'outil en ligne de commande de mammoth) : elle n'est pas présente dans le module navigateur utilisé par Lisible.

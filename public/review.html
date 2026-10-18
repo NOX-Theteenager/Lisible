@@ -8,8 +8,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="/fonts/fonts.css" rel="stylesheet">
 <style>
 :root{--bg:#f3efe7;--panel:#fffdf9;--sub:#f8f4ec;--line:#e8e1d4;--line2:#d8cfbf;--tx:#1c1915;--mu:#6b6459;--fa:#9a9285;--ac:#e8481c;--acs:#ffe6db;--btn:#1c1915;--btnfg:#fffdf9;--er:#cc3127;--ers:#fde5e2;--ok:#1b8455;--oks:#e1f3e9}
 @media (prefers-color-scheme:dark){:root{--bg:#12110f;--panel:#1b1916;--sub:#221f1b;--line:#2f2b26;--line2:#403a33;--tx:#f2ede4;--mu:#aca394;--fa:#7c7469;--ac:#ff6a3d;--acs:#3a1f15;--btn:#f2ede4;--btnfg:#12110f;--er:#f47b70;--ers:#331617;--ok:#5fd39a;--oks:#13281d}}
@@ -37,6 +36,7 @@ button{font:inherit;font-weight:600;height:40px;border:0;border-radius:999px;bac
 <body>
 <header><span class="mark" aria-hidden="true"><i></i><i></i></span><span class="logo">lisible<b>.</b></span><span class="muted" id="vname"></span></header>
 <main class="wrap" id="app"><div class="card"><span class="muted">Chargement du CV…</span></div></main>
+<footer style="max-width:1100px;margin:0 auto;padding:0 16px 32px;display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px"><a href="/confidentialite" style="color:var(--mu)">Confidentialité</a><a href="/conditions" style="color:var(--mu)">Conditions d’utilisation</a><a href="/mentions-legales" style="color:var(--mu)">Mentions légales</a></footer>
 <script>
 const LABELS={summary:'Résumé professionnel',experience:'Expérience professionnelle',education:'Formation',skills:'Compétences',languages:'Langues',projects:'Projets',certifications:'Certifications',contact:'Coordonnées'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -63,7 +63,7 @@ function render(note){const can=data.perm==='comment';
       <label>Votre prénom<input name="author" maxlength="80" required autocomplete="given-name"></label>
       <label>Section<select name="section">${Object.keys(LABELS).map(k=>`<option value="${k}">${LABELS[k]}</option>`).join('')}</select></label>
       <label>Commentaire<textarea name="body" rows="5" maxlength="2000" required></textarea></label>
-      ${note||''}<button type="submit">Envoyer</button></form>`:`<div class="card"><h3>Lecture seule</h3><span class="muted">Ce lien permet de lire le CV sans laisser de commentaire.</span></div>`}
+      ${note||''}<button type="submit">Envoyer</button><span class="muted">Votre prénom et votre commentaire sont transmis à la personne qui vous a partagé ce CV et supprimés au plus tard 30 jours après l’expiration du lien. <a href="/confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a></span></form>`:`<div class="card"><h3>Lecture seule</h3><span class="muted">Ce lien permet de lire le CV sans laisser de commentaire.</span></div>`}
     <div class="card"><h3>Commentaires (${data.comments.length})</h3>${data.comments.length?data.comments.map(c=>`<div class="cm"><b>${esc(c.author)} · ${esc(LABELS[c.section]||c.section)}</b>${esc(c.body)}</div>`).join(''):'<span class="muted">Aucun commentaire pour l’instant.</span>'}</div>
     <span class="muted">Lien valable jusqu’au ${new Date(data.expiresAt).toLocaleDateString('fr-FR')}.</span>
   </aside>`;

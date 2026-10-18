@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import { TASKS } from './tasks.js';
 import { writeLetter } from './claude.js';
 import { fetchOfferPage } from './fetch-offer.js';
+import { securityHeaders } from './security.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -19,7 +20,8 @@ const supa = SUPABASE_URL && SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPA
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '20mb' }));
+app.use(securityHeaders);
+app.use(express.json({ limit: '4mb' }));
 
 /* Identifie l'utilisateur Supabase (facultatif : les invités peuvent utiliser l'IA avec une limite plus basse). */
 async function identify(req, _res, next) {
@@ -74,6 +76,7 @@ app.post('/api/offer/fetch', identify, limiter, async (req, res) => {
 });
 
 /* Fichiers statiques (en local ; sur Vercel, public/ est servi par le CDN). */
+for (const page of ['confidentialite', 'conditions', 'mentions-legales']) app.get('/' + page, (_q, r) => r.sendFile(path.join(root, 'public', page + '.html')));
 app.get('/r/:token', (_q, r) => r.sendFile(path.join(root, 'public', 'review.html')));
 app.use(express.static(path.join(root, 'public'), { extensions: ['html'] }));
 
