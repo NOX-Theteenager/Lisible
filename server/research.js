@@ -25,6 +25,7 @@ const SCHEMA = S.obj({
   deadlines: S.arr(S.str),
   fees: S.str,
   outcomes: S.arr(S.str),
+  scholarships: S.arr(S.str),
   sources: S.arr(S.obj({ title: S.str, url: S.str })),
 });
 
@@ -43,6 +44,7 @@ Champs, en ${lang === 'en' ? 'anglais' : 'français'}, phrases courtes et factue
 - "deadlines" : calendrier et procédure de candidature publiés, avec l'année concernée (ex. « Candidature sur Mon Master du … au … 2027 », « Procédure Campus France Études en France pour les candidat·e·s du Cameroun »).
 - "fees" : frais de scolarité publiés avec l'année et le public concerné (étudiant·e·s internationaux si précisé) ; chaîne vide si introuvable.
 - "outcomes" : 2 à 4 débouchés ou chiffres d'insertion publiés.
+- "scholarships" : 0 à 4 bourses ou financements proposés par l'établissement ou ouverts à ses candidat·e·s internationaux (nom et financeur), seulement s'ils sont publiés.
 - "interviewAngles" : 2 à 4 liens concrets à faire dans la lettre et l'entretien entre la formation et un parcours de candidat·e.
 - "questionsToAsk" : 2 à 3 questions pertinentes à poser au jury ou au service des admissions.
 - "sources" : les pages réellement consultées (titre, URL).`,
@@ -63,7 +65,7 @@ Champs, en ${lang === 'en' ? 'anglais' : 'français'}, phrases courtes et factue
 - "recent" : 0 à 4 actualités récentes datées (mois et année) : projets, résultats, nominations, implantations.
 - "interviewAngles" : 2 à 4 liens concrets à faire en entretien entre cette actualité ou ces activités et le poste.
 - "questionsToAsk" : 2 à 3 questions pertinentes que la personne peut poser au recruteur.
-- "admission", "deadlines", "outcomes" : listes vides ; "fees" : chaîne vide.
+- "admission", "deadlines", "outcomes", "scholarships" : listes vides ; "fees" : chaîne vide.
 - "sources" : les pages réellement consultées (titre, URL).`,
     user: `Entreprise : ${txt(company, 200)}\nPoste : ${txt(role, 200) || '(non précisé)'}${url ? `\nLien de l'offre : ${txt(url, 400)}` : ''}\nOffre (extrait) :\n${txt(offerText, 3000) || '(non fournie)'}`,
   };
@@ -155,6 +157,7 @@ const clean = o => ({
   deadlines: (o.deadlines || []).slice(0, 5).map(x => txt(x, 400)),
   fees: txt(o.fees, 400),
   outcomes: (o.outcomes || []).slice(0, 5).map(x => txt(x, 300)),
+  scholarships: (o.scholarships || []).slice(0, 5).map(x => txt(x, 300)),
   kind: o.kind === 'school' ? 'school' : 'company',
   sources: (o.sources || []).filter(s => /^https?:\/\//.test(s.url || '')).slice(0, 8).map(s => ({ title: txt(s.title, 200), url: txt(s.url, 800) })),
   date: new Date().toISOString().slice(0, 10),

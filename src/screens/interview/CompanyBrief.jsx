@@ -55,6 +55,7 @@ export default function CompanyBrief({ v }) {
                   <List title="Calendrier et procédure" items={d.deadlines} />
                   <List title="Frais de scolarité" items={d.fees ? [d.fees] : []} />
                   <List title="Débouchés" items={d.outcomes} />
+                  <List title="Bourses et financements" items={d.scholarships} />
                   <List title="Spécificités" items={d.values} />
                   <List title="Actualité" items={d.recent} />
                   <List title="Liens à faire dans la lettre et l’entretien" items={d.interviewAngles} />

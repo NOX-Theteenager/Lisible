@@ -11,6 +11,7 @@ import { securityHeaders } from './security.js';
 import { reqCtx } from './context.js';
 import { createLiveSession, liveEnabled } from './live.js';
 import { searchJobs, jobsEnabled, searchAdzuna, adzunaEnabled, ADZUNA_COUNTRIES } from './jobs.js';
+import { searchPrograms } from './programs.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -85,6 +86,11 @@ app.post('/api/live/session', identify, liveLimiter, async (req, res) => {
 app.post('/api/jobs/search', identify, limiter, async (req, res) => {
   const b = req.body || {};
   try { res.set('Cache-Control', 'no-store').json(await (b.source === 'adzuna' ? searchAdzuna(b) : searchJobs(b))); } catch (e) { fail(res, e); }
+});
+
+/* Formations en France (données ouvertes Parcoursup et Mon Master, sans IA). */
+app.post('/api/programs/search', identify, limiter, async (req, res) => {
+  try { res.set('Cache-Control', 'no-store').json(await searchPrograms(req.body || {})); } catch (e) { fail(res, e); }
 });
 
 app.post('/api/pdf', identify, limiter, async (req, res) => {

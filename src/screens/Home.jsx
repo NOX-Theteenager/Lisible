@@ -1,5 +1,6 @@
 import React from 'react';
 import { ps } from '../lib/pseudo.js';
+import StudyHome from './home/StudyHome.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Home({ v }) {
@@ -19,6 +20,7 @@ export default function Home({ v }) {
               gap: '28px',
             }}
           >
+            {v.study ? <StudyHome v={v} /> : null}
             {' '}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'stretch' }}>
               {' '}

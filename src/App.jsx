@@ -47,7 +47,7 @@ export default class App extends React.Component {
       screen: (() => {
         try {
           const q = new URLSearchParams(location.search).get('screen');
-          return ['import', 'adapt', 'jobs', 'letter', 'editor', 'apps', 'interview'].includes(q) ? q : 'home';
+          return ['import', 'adapt', 'jobs', 'programs', 'letter', 'editor', 'apps', 'interview'].includes(q) ? q : 'home';
         } catch (e) {
           return 'home';
         }
@@ -1122,23 +1122,36 @@ export default class App extends React.Component {
     };
     const T = s.lang === 'en' ? UI_EN : UI_FR;
     const titles = {
-      interview: [T.interview, 'Questions probables, réponses STAR, pitch de 30 secondes et profil LinkedIn'],
-      apps: [T.apps, 'Suivez chaque candidature et comparez votre CV à plusieurs offres'],
+      interview:
+        s.track === 'study'
+          ? [T.interview, 'Questions probables du jury, pitch de présentation et simulation d’entretien d’admission']
+          : [T.interview, 'Questions probables, réponses STAR, pitch de 30 secondes et profil LinkedIn'],
+      apps:
+        s.track === 'study'
+          ? [T.apps, 'Dates limites, pièces du dossier et statut de chaque candidature aux formations']
+          : [T.apps, 'Suivez chaque candidature et comparez votre CV à plusieurs offres'],
       settings: [T.settings, 'Compte, langue, données personnelles et accessibilité'],
       home: ['Accueil', 'Créez, importez ou adaptez un CV conforme aux ATS'],
       editor: ['Éditeur', 'Parcours guidé, aperçu et score de conformité en direct'],
       import: [s.imp.mode === 'simple' ? 'Mise en conformité' : 'Importer un CV', 'Extraction, rapport de conformité et conversion'],
-      adapt: ['Adapter à une offre', 'Texte, lien, image ou PDF : l’IA compare l’annonce à votre CV'],
-      jobs: [T.jobs, 'Offres France Travail classées selon votre CV, recherches enregistrées'],
-      letter: ['Lettre de motivation', 'Rédigez-en une nouvelle ou améliorez la vôtre, à partir de l’offre visée'],
+      adapt:
+        s.track === 'study'
+          ? [T.adaptStudy, 'Présentation de la formation en texte, lien, image ou PDF : l’IA la compare à votre CV']
+          : ['Adapter à une offre', 'Texte, lien, image ou PDF : l’IA compare l’annonce à votre CV'],
+      jobs: [T.jobs, 'Offres France Travail et internationales classées selon votre CV, recherches enregistrées'],
+      programs: [T.programs, 'Formations en France (Parcoursup, écoles d’ingénieurs, Mon Master), à l’étranger, et bourses d’études'],
+      letter:
+        s.track === 'study'
+          ? ['Lettre de motivation', 'Lettre, projet d’études, statement of purpose ou personal statement, à partir de la formation visée']
+          : ['Lettre de motivation', 'Rédigez-en une nouvelle ou améliorez la vôtre, à partir de l’offre visée'],
       versions: ['Versions', 'Sauvegarde, duplication, renommage et historique'],
     };
     const navDef = [
       ['home', T.home, ''],
       ['editor', T.editor, an.score + ''],
       ['import', T.import, ''],
-      ['adapt', T.adapt, ''],
-      ...(s.track === 'study' ? [] : [['jobs', T.jobs, '']]),
+      ['adapt', s.track === 'study' ? T.adaptStudy : T.adapt, ''],
+      ...(s.track === 'study' ? [['programs', T.programs, '']] : [['jobs', T.jobs, '']]),
       ['letter', T.letter, ''],
       ['interview', T.interview, ''],
       ['apps', T.apps, s.apps.length + ''],
@@ -2082,6 +2095,43 @@ export default class App extends React.Component {
           this.go('interview');
         },
       },
+      studyHome: {
+        go: (k) => this.go(k),
+        academic: cv.kind === 'academic',
+        toAcademic: () => {
+          this.go('editor');
+          this.toast('Astuce : passez votre CV au format académique dans Paramètres → Votre objectif');
+        },
+        urgent: (() => {
+          const n = s.schoolApps.filter((a) => a.status === 'prepare' && a.deadline && daysLeft(a.deadline) >= 0 && daysLeft(a.deadline) <= 7).length;
+          return n ? n + ' candidature' + (n > 1 ? 's' : '') + ' à envoyer dans les 7 jours.' : '';
+        })(),
+      },
+      programs: {
+        market: s.market,
+        defaults: { q: s.letter.role || ((cv.education[0] || {}).degree || '') },
+        defaultLevel: /licence|bachelor|bts|but\b|dut/i.test((cv.education[0] || {}).degree || '') ? 'master' : 'licence',
+        toLetter: (it) => {
+          this.go('letter', { letter: { ...s.letter, company: it.school, role: it.program } });
+          this.toast('Établissement et formation repris dans la lettre');
+        },
+        follow: (it) => {
+          if (s.schoolApps.some((a) => a.school === it.school && a.program === it.program)) {
+            this.toast('Formation déjà suivie dans Candidatures');
+            return;
+          }
+          this.setState((st) => ({ schoolApps: [{ id: uid(), status: 'prepare', docs: {}, note: it.url ? 'Fiche : ' + it.url : '', school: it.school, program: it.program, platform: it.platform || 'direct', deadline: '' }, ...st.schoolApps] }));
+          this.toast('Formation ajoutée à vos candidatures');
+        },
+        followGrant: (g) => {
+          if (s.schoolApps.some((a) => a.program === g.name)) {
+            this.toast('Bourse déjà suivie dans Candidatures');
+            return;
+          }
+          this.setState((st) => ({ schoolApps: [{ id: uid(), status: 'prepare', docs: {}, note: 'Bourse · ' + g.url, school: g.by, program: g.name, platform: g.dest === 'France' ? 'campus' : 'abroad', deadline: '' }, ...st.schoolApps] }));
+          this.toast('Bourse ajoutée à vos candidatures : renseignez sa date limite');
+        },
+      },
       jobs: {
         cv,
         market: s.market,
@@ -2566,7 +2616,7 @@ export default class App extends React.Component {
         }
         const offer = this.state.ad.offer;
         if (!offer.trim()) {
-          this.toast(A.src === 'link' ? 'Collez d’abord un lien' : "Collez d'abord le texte de l'offre");
+          this.toast(A.src === 'link' ? 'Collez d’abord un lien' : s.track === 'study' ? 'Collez d’abord la présentation de la formation' : "Collez d'abord le texte de l'offre");
           return;
         }
         this.setState((st) => ({ ad: { ...st.ad, phase: 'busy' } }));
@@ -2585,7 +2635,7 @@ export default class App extends React.Component {
               letter: { ...st.letter, company: an.company || st.letter.company, role: an.role || st.letter.role, offerText: st.ad.offer },
               iv: st.letter.company === an.company ? st.iv : { ...st.iv, phase: 'idle' },
             }));
-            this.toast('Offre analysée : ' + an.keywords.length + ' mots-clés');
+            this.toast((s.track === 'study' ? 'Formation analysée : ' : 'Offre analysée : ') + an.keywords.length + ' mots-clés');
           })
           .catch((e) => {
             this.setState((st) => ({ ad: { ...st.ad, phase: 'input' } }));
@@ -2596,7 +2646,7 @@ export default class App extends React.Component {
       ad: {
         input: A.phase !== 'result',
         result: A.phase === 'result',
-        btn: A.srcPhase === 'busy' ? 'Lecture de la page…' : A.phase === 'busy' ? 'Analyse en cours…' : "Analyser l'offre",
+        btn: A.srcPhase === 'busy' ? 'Lecture de la page…' : A.phase === 'busy' ? 'Analyse en cours…' : s.track === 'study' ? 'Analyser la formation' : "Analyser l'offre",
         before: AN ? mB.score : '—',
         after: mA.score,
         ats: analyze(applied, tpl).score,
@@ -2813,6 +2863,7 @@ export default class App extends React.Component {
       isInterview: s.screen === 'interview',
       isApps: s.screen === 'apps',
       isJobs: s.screen === 'jobs',
+      isPrograms: s.screen === 'programs',
       isSettings: s.screen === 'settings',
       sumTics,
       letTics,
@@ -3673,7 +3724,7 @@ export default class App extends React.Component {
           ['pdf', 'PDF'],
         ]),
         showText: A.src === 'text' || A.srcPhase === 'done',
-        textLabel: A.src === 'text' ? 'Texte de l’offre' : 'Texte extrait par l’IA : vérifiez-le avant l’analyse',
+        textLabel: A.src === 'text' ? (s.track === 'study' ? 'Présentation de la formation' : 'Texte de l’offre') : 'Texte extrait par l’IA : vérifiez-le avant l’analyse',
       },
       adH: srcH('ad'),
       letSrc: srcVals('letter', [

@@ -1,5 +1,6 @@
 import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt, offerInsights, toneOf, interviewerRole } from './gemini.js';
 import { companyBrief, briefPrompt } from './research.js';
+import { isStudy } from './context.js';
 
 /* Ce que l'on sait du poste et de l'entreprise, ajouté aux consignes d'entretien. */
 const jobContext = (analysis, brief) => [offerInsights(analysis), briefPrompt(brief)].filter(Boolean).join('\n\n');
@@ -131,7 +132,7 @@ Si le contenu ne contient aucune offre d'emploi, renvoie found=false et laisse l
 async function analyzeOffer({ cv, offer, market, lang }) {
   if (!String(offer || '').trim()) throw bad('Collez d’abord le texte de l’offre.');
   const out = await genJSON({
-    system: `Tu compares une offre d'emploi à un CV pour l'adapter aux ATS, sans jamais inventer d'expérience.
+    system: `${isStudy() ? "Tu compares la présentation d'une formation (ou un appel à candidatures) à un CV pour adapter le CV à cette candidature : « company » est l'établissement, « role » la formation, les « requirements » sont les attendus et prérequis de la formation" : "Tu compares une offre d'emploi à un CV pour l'adapter aux ATS"}, sans jamais inventer d'expérience.
 - "company", "role" : entreprise et intitulé exact du poste de l'offre.
 - "keywords" : 12 à 20 mots-clés de l'offre. "k" libellé tel qu'écrit dans l'offre, "g" groupe (tech = outils et compétences techniques, soft = compétences transverses, domain = secteur/réglementation), "w" importance 1 à 3, "a" variantes en minuscules qui prouvent sa présence dans un CV (au moins le libellé en minuscules).
 - "requirements" : 3 à 6 exigences explicites (années d'expérience, langue, localisation, diplôme…), "met" si le CV y répond, "detail" ce que le CV indique.

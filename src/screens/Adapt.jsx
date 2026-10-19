@@ -46,7 +46,7 @@ export default function Adapt({ v }) {
                     {' '}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                       <span style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: '700', fontSize: '19px' }}>
-                        {'D’où vient l’offre ?'}
+                        {v.study ? 'D’où vient la présentation de la formation ?' : 'D’où vient l’offre ?'}
                       </span>
                       <span style={{ fontSize: '12.5px', color: 'var(--mu)' }}>
                         {'Collez le texte, un lien, une capture ou le PDF : l’IA en extrait le contenu.'}
@@ -176,7 +176,7 @@ export default function Adapt({ v }) {
                             ) : null}{' '}
                           </div>{' '}
                           <span style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <span style={{ fontWeight: '600' }}>{'Déposez une capture d’écran ou une photo de l’annonce'}</span>
+                            <span style={{ fontWeight: '600' }}>{v.study ? 'Déposez une capture d’écran ou une photo de la présentation' : 'Déposez une capture d’écran ou une photo de l’annonce'}</span>
                             <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
                               {'L’IA lit l’image (vision + OCR), même une affiche ou une photo prise au téléphone.'}
                             </span>
@@ -219,7 +219,7 @@ export default function Adapt({ v }) {
                             {'PDF'}
                           </span>{' '}
                           <span style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <span style={{ fontWeight: '600' }}>{'Choisir le PDF ou DOCX de l’annonce'}</span>
+                            <span style={{ fontWeight: '600' }}>{v.study ? 'Choisir le PDF ou DOCX de la présentation' : 'Choisir le PDF ou DOCX de l’annonce'}</span>
                             <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
                               {'Texte extrait avec pdf.js / mammoth.js, OCR en complément.'}
                             </span>
@@ -320,7 +320,7 @@ export default function Adapt({ v }) {
                             value={v.offer ?? ''}
                             onChange={v.onOffer}
                             rows="16"
-                            placeholder="Collez ici le texte complet de l'annonce…"
+                            placeholder={v.study ? 'Collez ici la présentation de la formation ou l’appel à candidatures…' : "Collez ici le texte complet de l'annonce…"}
                             style={{
                               width: '100%',
                               padding: '12px 14px',
@@ -559,7 +559,7 @@ export default function Adapt({ v }) {
                       flexShrink: '0',
                     }}
                   >
-                    {"Modifier l'offre"}
+                    {v.study ? 'Modifier la présentation' : "Modifier l'offre"}
                   </button>{' '}
                 </div>{' '}
                 <div
@@ -647,7 +647,7 @@ export default function Adapt({ v }) {
                     <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: '16px' }}>
                       {' '}
                       <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--line)', fontWeight: '600' }}>
-                        {'Exigences du poste'}
+                        {v.study ? 'Attendus de la formation' : 'Exigences du poste'}
                       </div>{' '}
                       {(v.reqs || []).map((q, i49) => (
                         <React.Fragment key={i49}>

@@ -121,6 +121,7 @@
     fetchOffer: (url) => post('/api/offer/fetch', { url }),
     liveSession: (body) => post('/api/live/session', withCtx(body)),
     jobs: (body) => post('/api/jobs/search', body),
+    programs: (body) => post('/api/programs/search', body),
     pdf,
   };
 })();
