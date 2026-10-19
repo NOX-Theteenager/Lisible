@@ -33,13 +33,14 @@ function Offer({ o, m, J }) {
           {m.hits.length ? <span style={{ fontSize: '12px', color: 'var(--ok)' }}>En commun avec votre CV : {m.hits.join(', ')}</span> : null}
         </div>
       </div>
+      {open && o.excerpt ? <span style={{ fontSize: '11.5px', color: 'var(--fa)' }}>Extrait fourni par Adzuna : l’annonce complète est sur le site d’origine. Collez-la dans « Adapter à une offre » pour une analyse complète.</span> : null}
       {open ? <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: 'var(--sub)', padding: '12px', borderRadius: '12px', maxHeight: '320px', overflow: 'auto' }}>{o.description}</p> : null}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         <Btn onClick={() => setOpen(!open)}>{open ? 'Masquer l’annonce' : 'Lire l’annonce'}</Btn>
         <Btn kind="ai" onClick={() => J.toAdapt(o)}>Adapter mon CV</Btn>
         <Btn onClick={() => J.toLetter(o)}>Préparer la lettre</Btn>
         <Btn onClick={() => J.follow(o)}>Suivre</Btn>
-        <a href={o.url} target="_blank" rel="noopener noreferrer nofollow" style={{ alignSelf: 'center', fontSize: '12.5px', fontWeight: 600, color: 'var(--ai)', padding: '0 6px' }}>Voir sur France Travail ↗</a>
+        <a href={o.url} target="_blank" rel="noopener noreferrer nofollow" style={{ alignSelf: 'center', fontSize: '12.5px', fontWeight: 600, color: 'var(--ai)', padding: '0 6px' }}>{o.excerpt ? 'Voir l’annonce complète ↗' : 'Voir sur France Travail ↗'}</a>
       </div>
     </div>
   );
@@ -58,7 +59,20 @@ export default function Jobs({ v }) {
   const [fresh, setFresh] = useState({}); // id de recherche enregistrée → nombre de nouvelles offres
   const prof = useMemo(() => (J.cv ? cvProfile(J.cv) : null), [J.cv]);
   const [enabled, setEnabled] = useState(null);
-  useEffect(() => { window.LisibleAPI.config().then((c) => setEnabled(!!(c.ai && c.ai.jobs))).catch(() => setEnabled(false)); }, []);
+  const [src, setSrc] = useState({ france: false, adzuna: false, countries: {} });
+  const [source, setSource] = useState('france');
+  const [country, setCountry] = useState(J.market === 'intl' ? 'gb' : J.market === 'fr' ? 'fr' : 'ca');
+  useEffect(() => {
+    window.LisibleAPI.config()
+      .then((c) => {
+        const j = c.jobs || {};
+        setSrc({ france: !!j.france, adzuna: !!j.adzuna, countries: j.countries || {} });
+        // France Travail pour le marché français, Adzuna (international) pour les autres.
+        setSource(j.france && (J.market === 'fr' || !j.adzuna) ? 'france' : 'adzuna');
+        setEnabled(!!(j.france || j.adzuna));
+      })
+      .catch(() => setEnabled(false));
+  }, []);
 
   // Nouvelles offres des recherches enregistrées depuis la dernière consultation.
   useEffect(() => {
@@ -67,7 +81,7 @@ export default function Jobs({ v }) {
     (async () => {
       for (const s of J.saved.slice(0, 5)) {
         try {
-          const r = await window.LisibleAPI.jobs({ q: s.q, place: s.place, contract: s.contract, since: 31 });
+          const r = await window.LisibleAPI.jobs({ q: s.q, place: s.place, contract: s.contract, since: 31, source: s.source || 'france', country: s.country });
           if (!live) return;
           setFresh((f) => ({ ...f, [s.id]: r.offers.filter((o) => o.date && o.date > s.seen).length }));
         } catch (e) { /* compteur facultatif */ }
@@ -77,7 +91,7 @@ export default function Jobs({ v }) {
   }, [enabled, (J.saved || []).length]);
 
   async function run(p = 0, o = {}) {
-    const query = { q: o.q ?? q, place: o.place ?? place, contract: o.contract ?? contract, since: o.since ?? since, page: p };
+    const query = { q: o.q ?? q, place: o.place ?? place, contract: o.contract ?? contract, since: o.since ?? since, page: p, source: o.source ?? source, country: o.country ?? country };
     if (!query.q.trim()) { setError('Indiquez un métier ou des mots-clés.'); return; }
     setBusy(true); setError('');
     try {
@@ -88,7 +102,9 @@ export default function Jobs({ v }) {
   }
   const openSaved = (s) => {
     setQ(s.q); setPlace(s.place); setContract(s.contract || ''); setSince('');
-    run(0, { q: s.q, place: s.place, contract: s.contract || '', since: '' });
+    if (s.source) setSource(s.source);
+    if (s.country) setCountry(s.country);
+    run(0, { q: s.q, place: s.place, contract: s.contract || '', since: '', source: s.source || 'france', country: s.country || country });
     J.markSeen(s.id);
     setFresh((f) => ({ ...f, [s.id]: 0 }));
   };
@@ -113,15 +129,28 @@ export default function Jobs({ v }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <Card style={{ padding: '20px', gap: '12px' }}>
         <H>Offres pour vous</H>
-        <Muted>Offres publiées sur France Travail, classées selon leur correspondance avec la version active de votre CV. Le classement est calculé sur votre appareil.</Muted>
-        {J.market !== 'fr' ? <Muted>France Travail ne couvre que les offres en France. Pour votre marché : {J.sites}</Muted> : null}
+        <Muted>Offres classées selon leur correspondance avec la version active de votre CV. Le classement est calculé sur votre appareil.</Muted>
+        {src.france && src.adzuna ? (
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Source</span><Seg value={source} options={[['france', 'France (France Travail)'], ['adzuna', 'International (Adzuna)']]} onChange={(k) => { setSource(k); setRes(null); if (k === 'adzuna' && (contract === 'MIS' || contract === 'SAI')) setContract(''); }} /></div>
+          </div>
+        ) : null}
+        {source === 'adzuna' ? (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignSelf: 'flex-start' }}>
+            <span style={label}>Pays</span>
+            <select value={country} onChange={(e) => { setCountry(e.target.value); setRes(null); }} style={{ ...field, height: '36px' }}>
+              {Object.entries(src.countries).sort((a, b) => a[1].localeCompare(b[1], 'fr')).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </label>
+        ) : null}
+        {J.market === 'cm' || J.market === 'afr' ? <Muted>Les sources automatiques ne couvrent pas encore l’Afrique francophone (seule l’Afrique du Sud est chez Adzuna). Pour votre marché : {J.sites}</Muted> : null}
         <form onSubmit={(e) => { e.preventDefault(); run(0); }} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <input aria-label="Métier ou mots-clés" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Métier ou mots-clés (ex. comptable)" style={{ ...field, flex: '2 1 220px' }} />
           <input aria-label="Lieu" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Ville, code postal ou département" style={{ ...field, flex: '1 1 180px' }} />
           <Btn kind="ai" type="submit" disabled={busy} style={{ height: '40px' }}>{busy ? 'Recherche…' : 'Rechercher'}</Btn>
         </form>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Contrat</span><Seg value={contract} options={CONTRACTS} onChange={setContract} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Contrat</span><Seg value={contract} options={source === 'adzuna' ? CONTRACTS.slice(0, 3) : CONTRACTS} onChange={setContract} /></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Publiées depuis</span><Seg value={since} options={SINCE} onChange={setSince} /></div>
         </div>
         {(J.saved || []).length ? (
@@ -130,7 +159,7 @@ export default function Jobs({ v }) {
             {J.saved.map((s) => (
               <span key={s.id} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '999px', border: '1px solid var(--line2)', background: 'var(--panel)' }}>
                 <button type="button" onClick={() => openSaved(s)} style={{ border: 0, background: 'transparent', color: 'var(--tx)', font: 'inherit', fontSize: '12.5px', fontWeight: 600, padding: '5px 4px 5px 12px', cursor: 'pointer' }}>
-                  {s.q}{s.place ? ' · ' + s.place : ''}
+                  {s.q}{s.place ? ' · ' + s.place : ''}{s.source === 'adzuna' && src.countries[s.country] ? ' · ' + src.countries[s.country] : ''}
                   {fresh[s.id] ? <span style={{ marginLeft: '6px', padding: '1px 7px', borderRadius: '999px', background: 'var(--ac)', color: '#fff', fontSize: '11px' }}>{fresh[s.id]} nouvelle{fresh[s.id] > 1 ? 's' : ''}</span> : null}
                 </button>
                 <button type="button" aria-label={'Supprimer la recherche ' + s.q} onClick={() => J.removeSearch(s.id)} style={{ border: 0, background: 'transparent', color: 'var(--fa)', font: 'inherit', fontSize: '14px', padding: '0 10px 0 4px', cursor: 'pointer' }}>×</button>
@@ -147,7 +176,7 @@ export default function Jobs({ v }) {
             <strong style={{ fontSize: '13.5px' }}>{res.total ? res.total.toLocaleString('fr-FR') + ' offre' + (res.total > 1 ? 's' : '') : 'Aucune offre trouvée'}</strong>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <Seg value={sort} options={[['match', 'Pertinence pour mon CV'], ['date', 'Plus récentes']]} onChange={setSort} />
-              <Btn onClick={() => J.saveSearch({ q, place, contract })}>Enregistrer la recherche</Btn>
+              <Btn onClick={() => J.saveSearch({ q, place, contract, source, country: source === 'adzuna' ? country : '' })}>Enregistrer la recherche</Btn>
             </div>
           </div>
           {list.map(({ o, m }) => <Offer key={o.id} o={o} m={m} J={J} />)}

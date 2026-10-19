@@ -20,8 +20,10 @@ async function token() {
   const body = new URLSearchParams({ grant_type: 'client_credentials', client_id: ID(), client_secret: SECRET(), scope: 'api_offresdemploiv2 o2dsoffre' });
   const r = await fetch(TOKEN_URL, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(15_000) });
   if (!r.ok) {
-    console.error('[offres] jeton refusé', r.status, (await r.text()).slice(0, 200));
-    throw Object.assign(new Error('Connexion à France Travail impossible. Vérifiez les identifiants de l’application.'), { status: 502, expose: true });
+    const t = (await r.text()).slice(0, 300);
+    console.error('[offres] jeton refusé', r.status, t);
+    // invalid_scope : l'application n'est pas abonnée à l'API « Offres d'emploi v2 ».
+    throw Object.assign(new Error(/invalid_scope/.test(t) ? 'L’application France Travail n’est pas abonnée à l’API « Offres d’emploi v2 ».' : 'Connexion à France Travail impossible. Vérifiez les identifiants de l’application.'), { status: 502, expose: true });
   }
   const j = await r.json();
   tok = { value: j.access_token, exp: Date.now() + (Number(j.expires_in) || 1200) * 1000 };
@@ -109,4 +111,57 @@ function mockSearch(q) {
   const data = JSON.parse(fs.readFileSync(MOCK(), 'utf8'));
   const offers = (data.resultats || []).map(shape);
   return { total: offers.length, offers, mock: true, q };
+}
+
+/* ─── Adzuna : offres internationales (developer.adzuna.com) ───
+   Identifiants : ADZUNA_APP_ID et ADZUNA_APP_KEY. L'API ne renvoie qu'un extrait de chaque annonce ;
+   le lien mène à l'annonce complète. Réponses gardées 10 minutes en mémoire pour ménager le quota. */
+export const ADZUNA_COUNTRIES = { gb: 'Royaume-Uni', us: 'États-Unis', ca: 'Canada', be: 'Belgique', ch: 'Suisse', fr: 'France', de: 'Allemagne', nl: 'Pays-Bas', es: 'Espagne', it: 'Italie', at: 'Autriche', pl: 'Pologne', au: 'Australie', nz: 'Nouvelle-Zélande', sg: 'Singapour', in: 'Inde', za: 'Afrique du Sud', br: 'Brésil', mx: 'Mexique' };
+export const adzunaEnabled = () => !!(process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY);
+const cache = new Map();
+
+function shapeAdzuna(o) {
+  const money = o.salary_min || o.salary_max ? [o.salary_min, o.salary_max].filter(Boolean).map(n => Math.round(n).toLocaleString('fr-FR')).join(' à ') + (o.salary_is_predicted === '1' ? ' (estimation)' : '') : '';
+  return {
+    id: 'az' + String(o.id || ''),
+    title: String(o.title || '').replace(/<[^>]+>/g, ''),
+    company: (o.company && o.company.display_name) || '',
+    city: (o.location && o.location.display_name) || '',
+    contract: { permanent: 'Permanent', contract: 'Contrat', part_time: 'Temps partiel', full_time: 'Temps plein' }[o.contract_type] || '',
+    contractCode: o.contract_type || '',
+    duration: { full_time: 'Temps plein', part_time: 'Temps partiel' }[o.contract_time] || '',
+    salary: money,
+    experience: '',
+    date: o.created || '',
+    skills: o.category && o.category.label ? [o.category.label] : [],
+    description: String(o.description || '').replace(/<[^>]+>/g, '').slice(0, 2000),
+    url: o.redirect_url || '',
+    excerpt: true,
+  };
+}
+
+export async function searchAdzuna({ q, place, country, contract, since, page }) {
+  const what = String(q || '').replace(/[^\p{L}\p{N}+#.,' -]/gu, ' ').trim().slice(0, 120);
+  if (!what) throw bad('Indiquez un métier ou des mots-clés.');
+  if (!adzunaEnabled()) throw Object.assign(new Error('La recherche internationale n’est pas encore activée sur ce serveur.'), { status: 503, expose: true });
+  const c = ADZUNA_COUNTRIES[country] ? country : 'gb';
+  const p = Math.max(0, Math.min(19, Number(page) || 0)) + 1;
+  const params = new URLSearchParams({ app_id: process.env.ADZUNA_APP_ID, app_key: process.env.ADZUNA_APP_KEY, what, results_per_page: '50', 'content-type': 'application/json', sort_by: 'date' });
+  const w = String(place || '').trim().slice(0, 80);
+  if (w) params.set('where', w);
+  if (contract === 'CDI') params.set('permanent', '1');
+  if (contract === 'CDD') params.set('contract', '1');
+  if ([1, 3, 7, 14, 31].includes(Number(since))) params.set('max_days_old', String(since));
+  const key = c + '|' + p + '|' + [...params].filter(([k]) => !k.startsWith('app_')).join('&');
+  const hit = cache.get(key);
+  if (hit && hit.exp > Date.now()) return hit.value;
+  const r = await fetch(`https://api.adzuna.com/v1/api/jobs/${c}/search/${p}?${params}`, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(20_000) });
+  if (r.status === 401 || r.status === 403) { console.error('[adzuna] identifiants refusés', r.status); throw Object.assign(new Error('Adzuna refuse les identifiants de l’application.'), { status: 502, expose: true }); }
+  if (r.status === 429) throw Object.assign(new Error('Quota Adzuna atteint : réessayez plus tard.'), { status: 429, expose: true });
+  if (!r.ok) { console.error('[adzuna]', r.status, (await r.text()).slice(0, 200)); throw Object.assign(new Error('Adzuna ne répond pas. Réessayez plus tard.'), { status: 502, expose: true }); }
+  const j = await r.json();
+  const value = { total: Number(j.count) || 0, offers: (j.results || []).map(shapeAdzuna), source: 'adzuna', country: c };
+  cache.set(key, { value, exp: Date.now() + 10 * 60_000 });
+  if (cache.size > 200) cache.delete(cache.keys().next().value);
+  return value;
 }

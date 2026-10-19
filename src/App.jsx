@@ -2090,11 +2090,11 @@ export default class App extends React.Component {
         saved: s.savedSearches,
         saveSearch: (x) => {
           if (!x.q.trim()) return;
-          if (s.savedSearches.some((y) => y.q === x.q && y.place === x.place && (y.contract || '') === (x.contract || ''))) {
+          if (s.savedSearches.some((y) => y.q === x.q && y.place === x.place && (y.contract || '') === (x.contract || '') && (y.source || 'france') === (x.source || 'france') && (y.country || '') === (x.country || ''))) {
             this.toast('Recherche déjà enregistrée');
             return;
           }
-          this.setState((st) => ({ savedSearches: [{ id: uid(), q: x.q.trim(), place: x.place.trim(), contract: x.contract || '', seen: new Date().toISOString() }, ...st.savedSearches].slice(0, 8) }));
+          this.setState((st) => ({ savedSearches: [{ id: uid(), q: x.q.trim(), place: x.place.trim(), contract: x.contract || '', source: x.source || 'france', country: x.country || '', seen: new Date().toISOString() }, ...st.savedSearches].slice(0, 8) }));
           this.toast('Recherche enregistrée : les nouvelles offres seront signalées ici');
         },
         removeSearch: (id) => this.setState((st) => ({ savedSearches: st.savedSearches.filter((y) => y.id !== id) })),

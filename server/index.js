@@ -10,7 +10,7 @@ import { fetchOfferPage } from './fetch-offer.js';
 import { securityHeaders } from './security.js';
 import { reqCtx } from './context.js';
 import { createLiveSession, liveEnabled } from './live.js';
-import { searchJobs, jobsEnabled } from './jobs.js';
+import { searchJobs, jobsEnabled, searchAdzuna, adzunaEnabled, ADZUNA_COUNTRIES } from './jobs.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -52,7 +52,8 @@ app.get('/api/config', (_req, res) => {
   res.json({
     supabaseUrl: SUPABASE_URL,
     supabaseAnonKey: SUPABASE_ANON_KEY,
-    ai: { gemini: !!process.env.GEMINI_API_KEY, claude: !!process.env.ANTHROPIC_API_KEY, live: liveEnabled(), jobs: jobsEnabled() },
+    ai: { gemini: !!process.env.GEMINI_API_KEY, claude: !!process.env.ANTHROPIC_API_KEY, live: liveEnabled(), jobs: jobsEnabled() || adzunaEnabled() },
+    jobs: { france: jobsEnabled(), adzuna: adzunaEnabled(), countries: ADZUNA_COUNTRIES },
   });
 });
 
@@ -82,7 +83,8 @@ app.post('/api/live/session', identify, liveLimiter, async (req, res) => {
 
 /* Offres d'emploi France Travail (sans IA). */
 app.post('/api/jobs/search', identify, limiter, async (req, res) => {
-  try { res.set('Cache-Control', 'no-store').json(await searchJobs(req.body || {})); } catch (e) { fail(res, e); }
+  const b = req.body || {};
+  try { res.set('Cache-Control', 'no-store').json(await (b.source === 'adzuna' ? searchAdzuna(b) : searchJobs(b))); } catch (e) { fail(res, e); }
 });
 
 app.post('/api/pdf', identify, limiter, async (req, res) => {
