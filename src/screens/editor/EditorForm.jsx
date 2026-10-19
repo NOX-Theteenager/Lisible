@@ -1795,8 +1795,11 @@ export default function EditorForm({ v }) {
             <button
               onClick={v.nextStep}
               style={{
-                height: '36px',
-                padding: '0 18px',
+                minHeight: '36px',
+                padding: '6px 18px',
+                minWidth: 0,
+                maxWidth: '100%',
+                lineHeight: 1.25,
                 border: '0',
                 borderRadius: '999px',
                 background: 'var(--ac)',
@@ -1805,7 +1808,8 @@ export default function EditorForm({ v }) {
                 fontSize: '13px',
                 fontWeight: '700',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'normal',
+                textAlign: 'center',
                 transition: 'transform .15s',
               }}
               className={ps('hover', 'transform:translateY(-1px)')}
