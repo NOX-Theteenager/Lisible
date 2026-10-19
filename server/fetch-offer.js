@@ -66,6 +66,8 @@ export async function fetchOfferPage(raw) {
     } catch { throw bad('Impossible de joindre cette page.'); } finally { clearTimeout(timer); }
     if (res.status >= 300 && res.status < 400 && res.headers.get('location')) { finalUrl = new URL(res.headers.get('location'), finalUrl); continue; }
     if (!res.ok) throw bad(res.status === 403 || res.status === 999 ? 'Ce site bloque la lecture automatique : copiez le texte de l’annonce ou faites une capture.' : 'La page a répondu ' + res.status + '.');
+    const type = res.headers.get('content-type') || '';
+    if (type && !/text\/html|application\/xhtml|text\/plain/i.test(type)) throw bad(/pdf/i.test(type) ? 'Ce lien mène à un PDF : téléchargez-le puis utilisez l’onglet « PDF ».' : 'Ce lien ne mène pas à une page d’offre lisible.');
     const len = Number(res.headers.get('content-length') || 0);
     if (len > 5_000_000) throw bad('Page trop volumineuse.');
     html = (await res.text()).slice(0, 3_000_000);

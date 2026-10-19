@@ -1,4 +1,5 @@
 import React from 'react';
+import BeforeAfter from './import/BeforeAfter.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Import({ v }) {
@@ -512,7 +513,8 @@ export default function Import({ v }) {
                 </div>{' '}
               </>
             ) : null}{' '}
-          </div>{' '}
+            <BeforeAfter v={v} />
+      </div>{' '}
         </>
       ) : null}
     </>

@@ -57,11 +57,14 @@
       return '';
     }
   }
-  async function post(url, body) {
+  /* Contexte ajouté à chaque demande d'IA : marché visé, langue du contenu, mémoire du profil. */
+  let ctx = {};
+  const withCtx = (body) => ({ ...ctx, ...(body || {}) });
+
+  async function send(url, body) {
     const t = await token();
-    let r;
     try {
-      r = await fetch(url, {
+      return await fetch(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...(t ? { authorization: 'Bearer ' + t } : {}) },
         body: JSON.stringify(body || {}),
@@ -69,19 +72,53 @@
     } catch (e) {
       throw new Error('Connexion au serveur impossible. Vérifiez votre réseau.');
     }
+  }
+  async function failed(r) {
     let j = null;
-    try {
-      j = await r.json();
-    } catch (e) {}
-    if (!r.ok) throw new Error((j && j.error) || 'Erreur ' + r.status);
-    return j;
+    try { j = await r.json(); } catch (e) {}
+    return new Error((j && j.error) || (r.status === 429 ? 'Trop de requêtes. Réessayez dans une minute.' : 'Erreur ' + r.status));
+  }
+  async function post(url, body) {
+    const r = await send(url, body);
+    if (!r.ok) throw await failed(r);
+    return r.json();
+  }
+  /* Lecture d'une réponse en lignes JSON (lettre rédigée au fil de l'eau). */
+  async function stream(url, body, onEvent) {
+    const r = await send(url, body);
+    if (!r.ok) throw await failed(r);
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = '', last = null;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (value) buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line) continue;
+        const ev = JSON.parse(line);
+        if (ev.type === 'error') throw new Error(ev.error);
+        last = ev; onEvent(ev);
+      }
+      if (done) break;
+    }
+    if (!last || last.type !== 'done') throw new Error('La rédaction a été interrompue. Réessayez.');
+    return last;
+  }
+  async function pdf(html, name) {
+    const r = await send('/api/pdf', { html, name });
+    if (!r.ok) throw await failed(r);
+    return r.blob();
   }
   window.LisibleAPI = {
     config,
     supabase,
     token,
-    ai: (task, body) => post('/api/ai/' + task, body),
-    letter: (body) => post('/api/letter', body),
+    setContext: (c) => { ctx = c || {}; },
+    ai: (task, body) => post('/api/ai/' + task, withCtx(body)),
+    letter: (body) => post('/api/letter', withCtx(body)),
+    letterStream: (body, onEvent) => stream('/api/letter/stream', withCtx(body), onEvent),
     fetchOffer: (url) => post('/api/offer/fetch', { url }),
+    pdf,
   };
 })();

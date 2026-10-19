@@ -1,4 +1,4 @@
-import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad } from './gemini.js';
+import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt } from './gemini.js';
 
 const MAX_TEXT = 60_000;
 const txt = (v, max = MAX_TEXT) => String(v || '').slice(0, max);
@@ -8,11 +8,12 @@ const fileParts = f => (f && f.data ? [{ inlineData: { mimeType: f.mimeType || '
 const ATS_RULES = `Règles ATS de référence : une seule colonne ; titres de sections standards (Résumé professionnel, Expérience professionnelle, Formation, Compétences, Langues, Projets, Certifications) ; aucune information dans l'en-tête ou le pied de page ; pas de tableau, zone de texte, image, icône, jauge ou graphique ; police standard (Arial, Calibri, Times New Roman, Helvetica…) ; dates au format MM/AAAA ; coordonnées complètes en haut du corps ; réalisations commençant par un verbe d'action et chiffrées.`;
 
 /* ─── Réécriture sans tics ─────────────────────────────────── */
-async function humanize({ text, context, lang }) {
+async function humanize({ text, context, lang, market }) {
   if (!String(text || '').trim()) throw bad('Texte vide');
   return genJSON({
     system: `Tu es correcteur·rice éditorial·e spécialisé·e en candidatures. ${STYLE}
 Réécris le texte pour qu'il sonne humain et précis, sans changer les faits. Conserve la langue d'origine${lang === 'en' ? ' (anglais)' : ''}. Contexte : ${context || 'texte libre'}.
+${contextPrompt({ market, lang })}
 Pour un résumé de CV : 3 à 4 phrases, sans « je ». Pour une lettre : conserve l'en-tête, la formule d'appel et la signature.
 "notes" : 2 à 4 remarques courtes sur ce que tu as changé.`,
     parts: [{ text: txt(text) }],
@@ -31,22 +32,24 @@ Une seule phrase, commençant par un verbe d'action au participe passé (ex. « 
   });
 }
 
-async function suggestBullet({ bullet, role, company, title, lang }) {
+async function suggestBullet({ bullet, role, company, title, lang, market }) {
   if (!String(bullet || '').trim()) return { alts: [] };
   return genJSON({
     system: `Tu proposes deux reformulations d'une réalisation de CV pour les ATS. ${STYLE}
 Chaque proposition : une phrase, commence par un verbe d'action fort au participe passé, décrit l'action et son résultat. Si le résultat chiffré manque, laisse un repère entre crochets ([X %], [N] utilisateurs…) au lieu d'inventer.
-Si la ligne est déjà excellente (verbe d'action + résultat chiffré), renvoie une liste vide. Langue : ${lang === 'en' ? 'anglais' : 'français'}.`,
+Si la ligne est déjà excellente (verbe d'action + résultat chiffré), renvoie une liste vide. Langue : ${lang === 'en' ? 'anglais' : 'français'}.
+${contextPrompt({ market })}`,
     parts: [{ text: `Poste : ${txt(role, 200)} chez ${txt(company, 200)} (titre visé : ${txt(title, 200)})\nRéalisation : ${txt(bullet, 800)}` }],
     schema: S.obj({ alts: S.arr(S.str) }),
     temperature: 0.7,
   });
 }
 
-async function suggestSummary({ cv, offer }) {
+async function suggestSummary({ cv, offer, market, lang, profile }) {
   return genJSON({
     system: `Tu rédiges le résumé professionnel d'un CV conforme ATS. ${STYLE}
-3 à 4 phrases, 40 à 80 mots, sans « je », les 3 compétences clés dans la première phrase, uniquement à partir des faits du CV.${offer ? ' Oriente le résumé vers l’offre fournie sans inventer de compétence.' : ''} Langue du CV.`,
+3 à 4 phrases, 40 à 80 mots, sans « je », les 3 compétences clés dans la première phrase, uniquement à partir des faits du CV.${offer ? ' Oriente le résumé vers l’offre fournie sans inventer de compétence.' : ''} Langue du CV.
+${contextPrompt({ market, lang, profile })}`,
     parts: [{ text: `CV : ${cvForPrompt(cv)}${offer ? '\n\nOffre : ' + txt(offer, 8000) : ''}` }],
     schema: S.obj({ text: S.str }),
     temperature: 0.6,
@@ -121,7 +124,7 @@ Si le contenu ne contient aucune offre d'emploi, renvoie found=false et laisse l
   return out;
 }
 
-async function analyzeOffer({ cv, offer }) {
+async function analyzeOffer({ cv, offer, market, lang }) {
   if (!String(offer || '').trim()) throw bad('Collez d’abord le texte de l’offre.');
   const out = await genJSON({
     system: `Tu compares une offre d'emploi à un CV pour l'adapter aux ATS, sans jamais inventer d'expérience.
@@ -131,7 +134,8 @@ async function analyzeOffer({ cv, offer }) {
 - "missingSkills" : compétences demandées absentes de la section Compétences du CV.
 - "rewrites" : 3 à 6 réécritures ciblées. kind = "summary" (nouveau résumé, exp=-1, b=-1), "bullet" (remplace la réalisation b de l'expérience exp, indices à partir de 0 dans le CV fourni) ou "add" (nouvelle réalisation dans l'expérience exp, b=-1). "where" : lieu lisible (« Résumé professionnel », « Entreprise · réalisation 2 »). "after" : texte proposé. "adds" : mots-clés de l'offre ajoutés. "check" : ce que la personne doit vérifier avant d'accepter (ex. un chiffre ou un outil à confirmer) ; chaîne vide sinon.
   ${STYLE}
-  Ne réutilise que les faits du CV ; un outil absent du CV ne peut apparaître que dans une réécriture dont "check" demande de le confirmer.`,
+  Ne réutilise que les faits du CV ; un outil absent du CV ne peut apparaître que dans une réécriture dont "check" demande de le confirmer.
+${contextPrompt({ market, lang })}`,
     parts: [{ text: `OFFRE :\n${txt(offer, 20_000)}\n\nCV (JSON) :\n${cvForPrompt(cv)}` }],
     schema: S.obj({
       company: S.str,
@@ -149,14 +153,15 @@ async function analyzeOffer({ cv, offer }) {
 }
 
 /* ─── Entretien ─────────────────────────────────────────────── */
-async function interview({ cv, offer }) {
+async function interview({ cv, offer, market, lang, profile }) {
   const o = offer || {};
   return genJSON({
     system: `Tu prépares un·e candidat·e à un entretien à partir de son CV et de l'offre. ${STYLE}
 - "questions" : 7 à 9 questions probables, groupe « Motivation », « Technique » ou « Comportement ». "hint" : un conseil concret pour y répondre. "star" : trame STAR pré-remplie UNIQUEMENT avec des faits du CV quand une expérience s'y prête ; sinon chaînes vides. Pour un résultat inconnu, mets un repère [à compléter].
 - "pitch" : pitch oral de 70 à 80 mots, à la première personne, ton parlé, avec un fait chiffré du CV et un lien explicite avec l'entreprise.
 - "linkedin" : "headline" (moins de 220 caractères) et "about" (3 à 5 courts paragraphes, première personne, faits du CV, se termine par ce que la personne recherche).
-Langue : celle du CV.`,
+Langue : celle du CV.
+${contextPrompt({ market, lang, profile })}`,
     parts: [{ text: `Entreprise : ${txt(o.company, 200)}\nPoste : ${txt(o.role, 200)}\nOffre :\n${txt(o.text, 15_000) || '(non fournie)'}\n\nCV :\n${cvForPrompt(cv)}` }],
     schema: S.obj({
       questions: S.arr(S.obj({ group: { type: 'string', enum: ['Motivation', 'Technique', 'Comportement'] }, q: S.str, hint: S.str, star: S.obj({ s: S.str, t: S.str, a: S.str, r: S.str }) })),
@@ -187,4 +192,27 @@ async function ocr({ image, pdf }) {
   return genJSON({ system: 'Tu es un moteur OCR exact. Ne corrige ni ne résume rien.', parts, schema: S.obj({ text: S.str }), temperature: 0 });
 }
 
-export const TASKS = { humanize, integrateMetric, suggestBullet, suggestSummary, suggestSkills, parseCv, extractOffer, analyzeOffer, interview, translateCv, ocr };
+/* ─── Simulation d'entretien : le modèle joue le recruteur ───── */
+async function mockInterview({ cv, offer, history, total, market, lang, profile }) {
+  const o = offer || {}, h = Array.isArray(history) ? history.slice(-12) : [], n = Math.min(Math.max(Number(total) || 5, 3), 10);
+  const done = h.length >= n;
+  const out = await genJSON({
+    system: `Tu joues le rôle d'un·e recruteur·se exigeant·e mais bienveillant·e qui mène un entretien d'embauche pour le poste ci-dessous, puis tu coaches la personne.
+${contextPrompt({ market, lang, profile })}
+Déroulé : ${n} questions au total, une à la fois, variées (motivation, technique ou métier, comportement, mise en situation), adaptées au CV et à l'offre ; rebondis sur les réponses précédentes quand c'est pertinent.
+${h.length ? `Évalue la DERNIÈRE réponse ("feedback") avec la méthode STAR : "star" indique si la Situation, la Tâche, l'Action et le Résultat sont présents ; "score" sur 10 ; "strengths" et "improve" : 1 à 3 points concrets chacun, en citant la réponse ; "betterAnswer" : une version améliorée de la réponse, à la première personne, qui n'utilise QUE les faits donnés par la personne ou présents dans le CV (repère [à compléter] pour un chiffre manquant).` : 'Aucune réponse à évaluer : "feedback" a score 0 et des listes vides.'}
+${done ? 'Toutes les questions ont été posées : "nextQuestion" vide, "done" vrai, et "summary" donne un bilan global (score moyen, 2-3 points forts, 2-3 priorités de travail).' : `"nextQuestion" : la question n°${h.length + 1}, formulée à l'oral, en une ou deux phrases. "done" faux, "summary" avec des champs vides.`}`,
+    parts: [{ text: `Entreprise : ${txt(o.company, 200) || '(non précisée)'}\nPoste : ${txt(o.role, 200) || '(non précisé)'}\nOffre :\n${txt(o.text, 12_000) || '(non fournie)'}\n\nCV :\n${cvForPrompt(cv)}\n\nÉchanges précédents :\n${h.map((x, i) => `Q${i + 1} : ${txt(x.q, 600)}\nR${i + 1} : ${txt(x.a, 3000)}`).join('\n\n') || '(aucun)'}` }],
+    schema: S.obj({
+      feedback: S.obj({ score: S.int, star: S.obj({ s: S.bool, t: S.bool, a: S.bool, r: S.bool }), strengths: S.arr(S.str), improve: S.arr(S.str), betterAnswer: S.str }),
+      nextQuestion: S.str,
+      done: S.bool,
+      summary: S.obj({ score: S.int, strengths: S.arr(S.str), priorities: S.arr(S.str) }),
+    }),
+    temperature: 0.6,
+  });
+  out.done = done;
+  return out;
+}
+
+export const TASKS = { humanize, integrateMetric, suggestBullet, suggestSummary, suggestSkills, parseCv, extractOffer, analyzeOffer, interview, translateCv, ocr, mockInterview };

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "fr-dev-fullstack",
+    "market": "fr",
+    "lang": "fr",
+    "name": "Julie Arnaud",
+    "minExperiences": 2,
+    "cvText": "JULIE ARNAUD\nDéveloppeuse web — julie.arnaud@exemple.fr — 06 11 22 33 44 — Nantes\n\nMON PARCOURS\nWebAtlantic (2021 - aujourd'hui) Développeuse full-stack\n• Participé à la refonte du site e-commerce en React et Node.js\n• Réduit le temps de chargement des pages de 35 %\n• Mis en place des tests automatisés (Jest) sur 120 composants\nAgence Pixel (sept. 2019 - 2021) Développeuse front-end\n• Intégré 15 sites vitrines pour des PME\n\nÉTUDES\nLicence professionnelle Développement web, IUT de Nantes, 2019\n\nCE QUE JE SAIS FAIRE\nReact ●●●●○  Node.js ●●●○○  TypeScript  PostgreSQL  Git\nAnglais : bon niveau",
+    "company": "Doctolib",
+    "role": "Développeur·se Full-Stack",
+    "offer": "Doctolib recrute un·e Développeur·se Full-Stack (Nantes, CDI). Missions : développer de nouvelles fonctionnalités en React, TypeScript et Ruby on Rails ; écrire des tests automatisés ; participer aux revues de code. Profil : 3 ans d'expérience, maîtrise de React et TypeScript, culture de la qualité, anglais professionnel."
+  },
+  {
+    "id": "fr-comptable",
+    "market": "fr",
+    "lang": "fr",
+    "name": "Karim Benali",
+    "minExperiences": 2,
+    "cvText": "Karim BENALI | Comptable | Lille | karim.benali@exemple.fr | 07 98 76 54 32\nExpériences\n2018-2024 : Cabinet Delmas Expertise — Comptable\nTenue de 45 dossiers clients (TPE, PME), déclarations de TVA mensuelles, préparation des bilans.\n2015-2018 : Leroy Distribution — Assistant comptable\nSaisie des factures fournisseurs, rapprochements bancaires.\nFormation : BTS Comptabilité et gestion (2015), DCG en cours\nLogiciels : Sage, Cegid, Excel (tableaux croisés dynamiques)\nJe suis rigoureux, dynamique et j'ai le sens du travail en équipe.",
+    "company": "Groupe Auchan",
+    "role": "Comptable général",
+    "offer": "Le Groupe Auchan recherche un Comptable général (H/F) à Villeneuve-d'Ascq. Vous assurez les clôtures mensuelles et annuelles, les déclarations fiscales et le suivi des immobilisations. Profil : BTS ou DCG, 5 ans d'expérience, maîtrise de SAP ou d'un ERP équivalent, Excel avancé."
+  },
+  {
+    "id": "cm-comptable-douala",
+    "market": "cm",
+    "lang": "fr",
+    "name": "Aïcha Mballa",
+    "minExperiences": 2,
+    "cvText": "CURRICULUM VITAE\nMBALLA Aïcha\nNée le 12/03/1993 — Douala, Cameroun — Tél : +237 690 12 34 56 — aicha.mballa@exemple.cm\nOBJECTIF : obtenir un poste de comptable dans une grande entreprise\nEXPÉRIENCES PROFESSIONNELLES\nDepuis janvier 2020 : Comptable, Société Industrielle du Littoral (SIL), Douala\n- Tenue de la comptabilité générale selon le référentiel SYSCOHADA\n- Déclarations fiscales mensuelles auprès de la DGI\n- Réduction du délai de clôture mensuelle de 12 à 7 jours\n2016-2019 : Aide-comptable, Cabinet Fiduciaire Ngando, Douala\n- Suivi de 30 dossiers clients\nFORMATION\n2016 : Licence en Comptabilité et Finance, Université de Douala\nLANGUES : Français (langue maternelle), Anglais (bon)\nINFORMATIQUE : Sage Saari, Excel, Word",
+    "company": "Brasseries du Cameroun",
+    "role": "Comptable confirmé(e)",
+    "offer": "Les Brasseries du Cameroun recrutent un(e) Comptable confirmé(e) basé(e) à Douala. Missions : comptabilité générale et analytique selon le SYSCOHADA, déclarations fiscales, préparation des états financiers, participation aux audits. Profil : Licence ou Master en comptabilité, 5 ans d'expérience minimum, maîtrise de Sage et d'Excel, bilingue français-anglais apprécié."
+  },
+  {
+    "id": "cm-ingenieur-yaounde",
+    "market": "cm",
+    "lang": "fr",
+    "name": "Paul Essomba",
+    "minExperiences": 2,
+    "cvText": "ESSOMBA Paul — Ingénieur en génie civil\nYaoundé | +237 677 45 67 89 | paul.essomba@exemple.cm\nPARCOURS PRO\n2019 – à ce jour : Ingénieur travaux, Razel-Bec Cameroun\nSuivi de chantier de la route Yaoundé-Ayos (45 km), encadrement de 60 ouvriers, respect du budget de 8 milliards FCFA.\n2017 – 2019 : Ingénieur stagiaire puis junior, Bureau d'études Sotrac\nCalcul de structures en béton armé pour 12 bâtiments.\nDIPLÔMES\nIngénieur de conception en génie civil, École Nationale Supérieure Polytechnique de Yaoundé (2017)\nLOGICIELS : AutoCAD, Robot Structural Analysis, MS Project\nLANGUES : français, anglais (courant)",
+    "company": "China Road and Bridge Corporation",
+    "role": "Conducteur de travaux routiers",
+    "offer": "CRBC Cameroun recrute un Conducteur de travaux routiers pour un projet financé par la Banque africaine de développement dans la région du Centre. Missions : planification et suivi des travaux, encadrement des équipes, reporting au maître d'ouvrage, respect des normes HSE. Profil : ingénieur génie civil, 5 ans d'expérience en travaux routiers, maîtrise de MS Project, bilingue français-anglais."
+  },
+  {
+    "id": "cm-anglophone-nurse",
+    "market": "cm",
+    "lang": "en",
+    "name": "Grace Nfor",
+    "minExperiences": 2,
+    "cvText": "GRACE NFOR\nRegistered Nurse | Buea, South West Region, Cameroon | +237 650 98 76 54 | grace.nfor@example.cm\nWORK EXPERIENCE\nRegional Hospital Buea — Staff Nurse (2019 - present)\n- Care for an average of 20 patients per shift in the maternity ward\n- Trained 8 student nurses from the University of Buea\nMount Mary Health Centre, Buea — Nurse (2016 - 2019)\n- Ran the vaccination programme for 1,200 children per year\nEDUCATION\nBachelor of Nursing Science, University of Buea (2016)\nLANGUAGES: English (native), French (intermediate)",
+    "company": "Médecins Sans Frontières",
+    "role": "Midwife / Maternity Nurse",
+    "offer": "Médecins Sans Frontières is looking for a Maternity Nurse for its project in the North West Region of Cameroon. Responsibilities: provide maternal and neonatal care, supervise and train national staff, ensure hygiene and infection control protocols. Requirements: nursing or midwifery degree, 3 years of experience in maternity, English required and French an asset."
+  },
+  {
+    "id": "ci-commercial-abidjan",
+    "market": "afr",
+    "lang": "fr",
+    "name": "Yao Konan",
+    "minExperiences": 2,
+    "cvText": "KONAN Yao Serge\nCommercial terrain — Abidjan, Côte d'Ivoire — +225 07 08 09 10 11 — yao.konan@exemple.ci\nEXPÉRIENCES\nOrange Côte d'Ivoire (2020-2024) : Superviseur commercial\nAnimation d'une équipe de 12 commerciaux sur Abidjan Nord, chiffre d'affaires en hausse de 18 % en 2023.\nSolibra (2017-2020) : Commercial\nGestion d'un portefeuille de 150 points de vente.\nFORMATION\nBTS Action commerciale, Institut Pigier Côte d'Ivoire (2017)\nCompétences : négociation, CRM Salesforce, Excel",
+    "company": "Nestlé Côte d'Ivoire",
+    "role": "Chef des ventes régional",
+    "offer": "Nestlé Côte d'Ivoire recrute un Chef des ventes régional pour la zone Abidjan. Missions : piloter une équipe de commerciaux, atteindre les objectifs de volume, développer la distribution moderne et traditionnelle. Profil : Bac+3 en commerce, 5 ans d'expérience dont 2 en management d'équipe, maîtrise d'un CRM."
+  },
+  {
+    "id": "sn-ong-dakar",
+    "market": "afr",
+    "lang": "fr",
+    "name": "Fatou Diop",
+    "minExperiences": 2,
+    "cvText": "Fatou DIOP — Chargée de projet\nDakar, Sénégal • +221 77 123 45 67 • fatou.diop@exemple.sn\nExpérience\n2021-2024 — Chargée de projet, ONG Enda Énergie, Dakar : coordination d'un projet d'accès à l'énergie solaire pour 40 villages (budget de 600 000 €), suivi-évaluation, rapports aux bailleurs (Union européenne).\n2019-2021 — Assistante de projet, Plan International Sénégal : appui à la mise en œuvre d'un projet éducatif dans 25 écoles.\nFormation : Master en développement durable, Université Cheikh Anta Diop (2019)\nLangues : français, wolof, anglais (B2)",
+    "company": "GIZ Sénégal",
+    "role": "Coordinatrice de projet énergie",
+    "offer": "La GIZ recrute un(e) Coordinateur(rice) de projet énergie à Dakar. Missions : planifier et coordonner les activités du projet, gérer les partenariats, assurer le suivi-évaluation et le reporting. Profil : Master, 5 ans d'expérience en gestion de projets de développement, expérience avec des bailleurs internationaux, français et anglais."
+  },
+  {
+    "id": "ma-data-casablanca",
+    "market": "afr",
+    "lang": "fr",
+    "name": "Yassine El Amrani",
+    "minExperiences": 1,
+    "cvText": "Yassine EL AMRANI\nData Analyst junior | Casablanca, Maroc | +212 6 61 23 45 67 | yassine.elamrani@exemple.ma\nEXPÉRIENCE\nAttijariwafa bank (2022-2024) — Data Analyst\n• Construit 14 tableaux de bord Power BI pour la direction des risques\n• Automatisé un rapport hebdomadaire en Python, gain de 6 heures par semaine\nSTAGE\nOCP Group (2021) — Stagiaire data, nettoyage de données de production\nFORMATION\nIngénieur d'État en informatique, ENSIAS Rabat (2022)\nOUTILS : SQL, Python (pandas), Power BI, Excel",
+    "company": "Inwi",
+    "role": "Data Analyst",
+    "offer": "Inwi recrute un Data Analyst à Casablanca. Missions : analyser les données clients, concevoir des tableaux de bord, produire des études pour le marketing. Profil : ingénieur ou Bac+5, 2 ans d'expérience, SQL, Python et un outil de BI (Power BI ou Tableau), esprit d'analyse."
+  },
+  {
+    "id": "fr-jeune-diplome-marketing",
+    "market": "fr",
+    "lang": "fr",
+    "name": "Léa Fontaine",
+    "minExperiences": 1,
+    "cvText": "Léa Fontaine\n22 ans — Bordeaux — lea.fontaine@exemple.fr — 06 55 44 33 22\nÀ propos : jeune diplômée passionnée et motivée, je cherche à relever de nouveaux défis !\nStages\nCdiscount (6 mois, 2024) : assistante marketing digital — création de 30 newsletters, taux d'ouverture passé de 18 % à 24 %\nOffice de tourisme de Bordeaux (2 mois, 2023) : gestion des réseaux sociaux\nÉtudes : Master Marketing digital, INSEEC Bordeaux (2024)\nOutils : Canva, Google Analytics, Meta Business Suite, HubSpot",
+    "company": "Decathlon",
+    "role": "Chargé·e de marketing digital",
+    "offer": "Decathlon recrute un·e Chargé·e de marketing digital à Bordeaux. Missions : piloter les campagnes e-mail et réseaux sociaux, analyser les performances, travailler avec les équipes produit. Profil : Bac+5 en marketing, une première expérience en marketing digital, maîtrise de Google Analytics et d'un outil de CRM."
+  },
+  {
+    "id": "intl-software-engineer",
+    "market": "intl",
+    "lang": "en",
+    "name": "Daniel Okafor",
+    "minExperiences": 2,
+    "cvText": "Daniel Okafor\nSoftware Engineer | London, UK | daniel.okafor@example.com | +44 7700 900123\nEXPERIENCE\nMonzo Bank — Backend Engineer (2021-present)\n- Built payment reconciliation services in Go handling 2 million transactions per day\n- Cut incident response time by 40% by adding structured logging and alerts\nThoughtWorks — Software Developer (2018-2021)\n- Delivered APIs for 4 clients in retail and insurance\nEDUCATION\nBSc Computer Science, University of Manchester (2018)\nSKILLS: Go, Python, PostgreSQL, Kubernetes, AWS, gRPC",
+    "company": "Stripe",
+    "role": "Backend Engineer, Payments",
+    "offer": "Stripe is hiring a Backend Engineer for its Payments team in London. You will design and build reliable, scalable services that move money for millions of businesses. Requirements: 4+ years of backend experience, strong skills in a systems language (Go, Java or Ruby), experience with distributed systems and relational databases."
+  }
+]

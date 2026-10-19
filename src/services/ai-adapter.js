@@ -111,6 +111,9 @@
     analyzeOffer: (cv, offer) => api().ai('analyzeOffer', { cv, offer }),
 
     /* Lettre de motivation (Claude). Retour : texte complet avec en-tête. */
+    letterStream: (payload, onDelta) => api().letterStream(payload, (ev) => { if (ev.type === 'delta') onDelta(ev.text); }).then((ev) => ev.text),
+    /* Simulation d'entretien : { feedback, nextQuestion, done, summary } */
+    mockInterview: (body) => api().ai('mockInterview', body),
     letter: (payload) =>
       api()
         .letter(payload)

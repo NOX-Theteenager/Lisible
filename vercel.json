@@ -15,7 +15,9 @@
   ],
   "functions": {
     "api/index.js": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "memory": 2048,
+      "includeFiles": "{server/pdf-fonts/**,node_modules/@sparticuz/chromium/bin/**}"
     }
   },
   "headers": [

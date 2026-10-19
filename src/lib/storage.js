@@ -13,6 +13,8 @@ export const settingsOf = (s) => ({
   lang: s.lang,
   prefs: s.prefs,
   currentId: s.currentId,
+  market: s.market,
+  profile: s.profile,
   work: {
     ad: { offer: s.ad.offer, analysis: s.ad.analysis, acc: s.ad.acc, sk: s.ad.sk, result: s.ad.phase === 'result' },
     letter: {
@@ -23,6 +25,10 @@ export const settingsOf = (s) => ({
       text: s.letter.text,
       offerText: s.letter.offerText,
       old: s.letter.old,
+      lang: s.letter.lang,
+      multi: s.letter.multi,
+      variants: (s.letter.variants || []).map((x) => ({ angle: x.angle, label: x.label, text: x.text, status: x.status === 'busy' ? 'error' : x.status })),
+      vi: s.letter.vi,
     },
     iv: s.iv.phase === 'ready' ? { phase: 'ready', qs: s.iv.qs, open: s.iv.open, pitch: s.iv.pitch, li: s.iv.li } : null,
   },

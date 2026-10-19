@@ -1,0 +1,1107 @@
+{
+  "date": "2026-10-19T01:09:29.042Z",
+  "provider": "claude",
+  "models": {
+    "gemini": "gemini-3.6-flash",
+    "claude": "claude-sonnet-5-5"
+  },
+  "total": 98,
+  "byTask": {
+    "parse": [
+      49,
+      50
+    ],
+    "analyze": [
+      39,
+      40
+    ],
+    "bullet": [
+      20,
+      20
+    ],
+    "letter": [
+      54,
+      58
+    ]
+  },
+  "results": [
+    {
+      "id": "ci-commercial-abidjan",
+      "ms": 39055,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "KONAN Yao Serge"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 68"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Nestlé Côte d'Ivoire"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "16"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "257 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Nestlé Côte d'Ivoire"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de Chef "
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "1 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "cm-anglophone-nurse",
+      "ms": 44446,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Grace Nfor"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 72"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Médecins Sans Frontières"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "17"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "288 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Médecins Sans Frontières"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en anglais",
+          "ok": true,
+          "detail": "\nDear Hiring Manager,\n\nYour advertisemen"
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": false,
+          "detail": "4 repère(s)"
+        }
+      ],
+      "score": 94
+    },
+    {
+      "id": "cm-comptable-douala",
+      "ms": 47356,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "MBALLA Aïcha"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": false,
+          "detail": "1993"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 62"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Les Brasseries du Cameroun"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "14"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "256 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Brasseries du Cameroun"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de compt"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": false,
+          "detail": "4 repère(s)"
+        }
+      ],
+      "score": 88
+    },
+    {
+      "id": "cm-ingenieur-yaounde",
+      "ms": 46574,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "ESSOMBA Paul"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "8 problème(s), score 62"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "CRBC Cameroun"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "18"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "288 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "China Road and Bridge Corporation"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de condu"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "3 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "fr-comptable",
+      "ms": 45105,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Karim BENALI"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 52"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Groupe Auchan"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "15"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "241 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Groupe Auchan"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de compt"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "2 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "fr-dev-fullstack",
+      "ms": 46028,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Julie Arnaud"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "8 problème(s), score 62"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Doctolib"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "14"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "284 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Doctolib"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de dével"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "3 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "fr-jeune-diplome-marketing",
+      "ms": 41190,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Léa Fontaine"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 1 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 58"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Decathlon"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "14"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "277 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Decathlon"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nL'offre de Decathlon"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "3 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "intl-software-engineer",
+      "ms": 41481,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Daniel Okafor"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 72"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Stripe"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "17"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "0"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "250 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Stripe"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en anglais",
+          "ok": true,
+          "detail": "\nDear Hiring Manager,\n\nYour description "
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "1 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "ma-data-casablanca",
+      "ms": 41877,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Yassine EL AMRANI"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 1 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "7 problème(s), score 62"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "Inwi"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "16"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "279 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "Inwi"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nVotre offre de Data "
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "1 repère(s)"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "sn-ong-dakar",
+      "ms": 40302,
+      "checks": [
+        {
+          "task": "parse",
+          "name": "nom extrait",
+          "ok": true,
+          "detail": "Fatou DIOP"
+        },
+        {
+          "task": "parse",
+          "name": "au moins 2 expérience(s)",
+          "ok": true,
+          "detail": "2 trouvée(s)"
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait perdu",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "aucun fait inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "parse",
+          "name": "problèmes ATS signalés",
+          "ok": true,
+          "detail": "6 problème(s), score 62"
+        },
+        {
+          "task": "analyze",
+          "name": "entreprise reconnue",
+          "ok": true,
+          "detail": "GIZ"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 8 mots-clés",
+          "ok": true,
+          "detail": "15"
+        },
+        {
+          "task": "analyze",
+          "name": "au moins 2 réécritures",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "analyze",
+          "name": "réécritures sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "bullet",
+          "name": "au plus 2 propositions",
+          "ok": true,
+          "detail": "2"
+        },
+        {
+          "task": "bullet",
+          "name": "propositions sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "longueur 200 à 400 mots",
+          "ok": true,
+          "detail": "281 mots"
+        },
+        {
+          "task": "letter",
+          "name": "entreprise citée",
+          "ok": true,
+          "detail": "GIZ Sénégal"
+        },
+        {
+          "task": "letter",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "rédigée en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nPendant trois ans, c"
+        },
+        {
+          "task": "letter",
+          "name": "aucun cliché ni formule creuse",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "letter",
+          "name": "au plus 3 repères à compléter",
+          "ok": true,
+          "detail": "3 repère(s)"
+        }
+      ],
+      "score": 100
+    }
+  ]
+}

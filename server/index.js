@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { TASKS } from './tasks.js';
-import { writeLetter } from './claude.js';
+import { writeLetter, streamLetter } from './claude.js';
 import { fetchOfferPage } from './fetch-offer.js';
 import { securityHeaders } from './security.js';
 
@@ -65,6 +65,19 @@ app.post('/api/ai/:task', identify, limiter, async (req, res) => {
 
 app.post('/api/letter', identify, limiter, async (req, res) => {
   try { res.json(await writeLetter(req.body || {})); } catch (e) { fail(res, e); }
+});
+
+app.post('/api/letter/stream', identify, limiter, (req, res) => streamLetter(req.body || {}, res));
+
+app.post('/api/pdf', identify, limiter, async (req, res) => {
+  try {
+    const { renderPdf } = await import('./pdf.js');
+    const pdf = await renderPdf({ html: req.body && req.body.html, margin: req.body && req.body.margin });
+    const name = String((req.body && req.body.name) || 'document').replace(/[^\w.-]+/g, '_').slice(0, 80) || 'document';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${name}.pdf"`);
+    res.send(pdf);
+  } catch (e) { fail(res, e); }
 });
 
 app.post('/api/offer/fetch', identify, limiter, async (req, res) => {

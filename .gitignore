@@ -6,3 +6,4 @@ public/vendor/
 .vercel
 .env*
 dist/
+evals/results/

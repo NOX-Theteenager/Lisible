@@ -1,6 +1,7 @@
 /* Logique de l'application : état, actions et valeurs affichées par les écrans. */
 import React from 'react';
 import AppView from './AppView.jsx';
+import { marketOf } from './lib/markets.js';
 import { dueOf } from './lib/applications.js';
 import { DATE_RE, analyze, applyAdapt, hasNum, isWeak, matchKw } from './lib/ats.js';
 import { APP_COLS, HINTS, IMPORT_STEPS, LEVELS_EN, LEVELS_FR, LIB, TIPS, UI_EN, UI_FR, VERBS } from './lib/content.js';
@@ -141,7 +142,13 @@ export default class App extends React.Component {
         old: (W.letter && W.letter.old) || '',
         oldName: '',
         diag: null,
+        lang: (W.letter && W.letter.lang) || '',
+        multi: !!(W.letter && W.letter.multi),
+        variants: (W.letter && W.letter.variants) || [],
+        vi: (W.letter && W.letter.vi) || 0,
       },
+      market: (saved && saved.market) || 'fr',
+      profile: (saved && saved.profile) || { motivation: '', achievements: '', constraints: '', values: '', use: true },
       exp: { open: false, fmt: 'docx', name: '' },
       toast: '',
       renaming: null,
@@ -227,6 +234,12 @@ export default class App extends React.Component {
   }
   componentDidUpdate(pp, ps0) {
     const ps = this._prev || ps0 || this.state;
+    this.syncContext();
+    {
+      const Lp = ps.letter, Ln = this.state.letter, cur = Ln.variants && Ln.variants[Ln.vi];
+      if (Ln !== Lp && cur && Ln.phase === 'done' && Lp.vi === Ln.vi && cur.text !== Ln.text)
+        this.setState((st) => ({ letter: { ...st.letter, variants: st.letter.variants.map((x, j) => (j === st.letter.vi ? { ...x, text: st.letter.text } : x)) } }));
+    }
     this.watchPv();
     {
       const pn = this.paperRef.current;
@@ -278,6 +291,8 @@ export default class App extends React.Component {
       'ad',
       'letter',
       'iv',
+      'market',
+      'profile',
     ];
     if (!keys.some((k) => ps[k] !== s[k])) return;
     clearTimeout(this._st);
@@ -310,7 +325,7 @@ export default class App extends React.Component {
   applySettings(set) {
     const W = set.work || {},
       o = {};
-    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs'].forEach((k) => {
+    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'profile'].forEach((k) => {
       if (set[k] != null) o[k] = set[k];
     });
     this.setState((st) => ({
@@ -335,6 +350,10 @@ export default class App extends React.Component {
             text: W.letter.text || '',
             offerText: W.letter.offerText || '',
             old: W.letter.old || '',
+            lang: W.letter.lang || '',
+            multi: !!W.letter.multi,
+            variants: W.letter.variants || [],
+            vi: W.letter.vi || 0,
             phase: W.letter.text ? 'done' : 'idle',
           }
         : st.letter,
@@ -464,6 +483,44 @@ export default class App extends React.Component {
       this.setState({ sugBusy: null, sug: null });
       this.toast(errMsg(err));
     }
+  }
+  /* Contexte envoyé avec chaque demande d'IA : marché, langue du contenu, mémoire du profil. */
+  syncContext() {
+    const s = this.state, cv = this.cur().cv;
+    const ctx = { market: s.market, lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr', profile: s.profile };
+    const key = JSON.stringify(ctx);
+    if (key !== this._ctxKey && window.LisibleAPI) { this._ctxKey = key; window.LisibleAPI.setContext(ctx); }
+  }
+  /* Télécharge un PDF texte généré par le serveur ; renvoie false si le service est indisponible. */
+  async pdfDownload(html, name) {
+    try {
+      const blob = await window.LisibleAPI.pdf(html, name);
+      this.download(name + '.pdf', blob, 'application/pdf');
+      return true;
+    } catch (e) {
+      console.warn('PDF serveur indisponible', e);
+      return false;
+    }
+  }
+  printHtml(html) {
+    try {
+      const f = document.createElement('iframe');
+      f.style.cssText = 'position:fixed;width:0;height:0;border:0';
+      document.body.appendChild(f);
+      f.contentDocument.open();
+      f.contentDocument.write(html);
+      f.contentDocument.close();
+      setTimeout(() => {
+        f.contentWindow.print();
+        setTimeout(() => f.remove(), 1000);
+      }, 250);
+    } catch (e) {}
+  }
+  letterHtml() {
+    const s = this.state, sp = splitLetter(s.letter.text), font = FONTS[s.letFont] || FONTS.Arial;
+    const lines = (a, right) => a.map((t, i) => `<div style="${i === 0 ? 'font-weight:700;' : ''}${right ? 'text-align:right;' : ''}">${esc(t)}</div>`).join('');
+    const body = (sp.sender.length ? sp.body : s.letter.text).split(/\n\s*\n/).map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>@page{size:A4;margin:2.2cm 2.4cm}body{font-family:${font};font-size:${s.letSize}pt;line-height:1.5;color:#111}p{margin:0 0 .9em}.head{display:flex;flex-direction:column;gap:1.6em;margin-bottom:2em}</style></head><body>${sp.sender.length ? `<div class="head"><div>${lines(sp.sender)}</div><div style="align-self:flex-end">${lines(sp.recipient, true)}</div></div>` : ''}${body}</body></html>`;
   }
   cur() {
     return this.state.versions.find((v) => v.id === this.state.currentId) || this.state.versions[0];
@@ -632,24 +689,24 @@ export default class App extends React.Component {
       } else this.download(base + '.doc', '\ufeff' + docHtml(cv, tpl), 'application/msword');
     } else {
       const node = this.paperRef.current;
-      const html =
-        node && tpl.isDesign
-          ? '<html><head><meta charset="utf-8"><style>@page{margin:0}body{margin:0}</style></head><body>' +
-            node.outerHTML.replace(/rgba\(232, 72, 28, 0\.07\)/g, 'transparent').replace(/zoom:[^;"]+;?/, '') +
-            '</body></html>'
-          : docHtml(cv, tpl).replace('margin:2cm', 'margin:0') + '<style>@page{margin:2cm}</style>';
-      try {
-        const f = document.createElement('iframe');
-        f.style.cssText = 'position:fixed;width:0;height:0;border:0';
-        document.body.appendChild(f);
-        f.contentDocument.open();
-        f.contentDocument.write(html);
-        f.contentDocument.close();
-        setTimeout(() => {
-          f.contentWindow.print();
-          setTimeout(() => f.remove(), 1000);
-        }, 250);
-      } catch (e) {}
+      let html;
+      if (node && tpl.isDesign) {
+        const c = node.cloneNode(true);
+        c.querySelectorAll('[style*="dashed"]').forEach((e) => { if (/position:\s*absolute/.test(e.getAttribute('style') || '')) e.remove(); });
+        c.querySelectorAll('label').forEach((e) => { if (e.querySelector('input[type=file]')) e.remove(); });
+        c.style.zoom = '';
+        c.style.border = '0';
+        c.style.borderRadius = '0';
+        c.style.boxShadow = 'none';
+        html = '<html><head><meta charset="utf-8"><style>@page{size:A4;margin:0}body{margin:0}</style></head><body>' + c.outerHTML.replace(/rgba\(232, 72, 28, 0\.07\)/g, 'transparent') + '</body></html>';
+      } else html = docHtml(cv, tpl).replace('margin:2cm', 'margin:0').replace('</head>', '<style>@page{size:A4;margin:2cm}</style></head>');
+      this.setState((st) => ({ exp: { ...st.exp, open: false } }));
+      this.toast('Génération du PDF…');
+      this.pdfDownload(html, base).then((ok) => {
+        if (ok) this.toast('PDF téléchargé' + (s.anon ? ' (anonymisé)' : ''));
+        else { this.printHtml(html); this.toast('Service PDF indisponible : choisissez « Enregistrer au format PDF » dans la fenêtre d’impression'); }
+      });
+      return;
     }
     this.setState((st) => ({ exp: { ...st.exp, open: false } }));
     this.toast('Export ' + { docx: 'Word', pdf: 'PDF', txt: 'TXT' }[s.exp.fmt] + ' lancé' + (s.anon ? ' (anonymisé)' : ''));
@@ -824,7 +881,7 @@ export default class App extends React.Component {
   async letterAction() {
     const s = this.state,
       L = s.letter;
-    if (L.phase === 'busy') return;
+    if (L.phase === 'busy' || L.phase === 'stream') return;
     if (L.mode === 'improve' && !L.old.trim()) {
       this.toast('Importez ou collez d’abord votre lettre');
       return;
@@ -835,30 +892,55 @@ export default class App extends React.Component {
     }
     const cv = s.anon ? anonCv(this.cur().cv) : this.cur().cv;
     const offerText = (L.src === 'offer' ? s.ad.offer || L.offerText : L.offerText || s.ad.offer) || '';
-    this.setState((st) => ({ letter: { ...st.letter, phase: 'busy' } }));
-    try {
-      const raw = await window.CVAI.letter({
-        cv,
-        offer: { company: L.company, role: L.role, text: offerText },
-        tone: L.tone,
-        mode: L.mode,
-        oldLetter: L.old,
-        lang: cv.lang || s.lang,
-      });
-      const text = NT().autoFix(raw).text;
-      this.setState((st) => ({
-        letter: {
-          ...st.letter,
-          phase: 'done',
-          text,
-          diag: st.letter.mode === 'improve' ? letterDiag(st.letter.old, st.letter.company) : null,
-        },
-      }));
-      this.toast('Lettre rédigée');
-    } catch (e) {
-      this.setState((st) => ({ letter: { ...st.letter, phase: st.letter.text ? 'done' : 'idle' } }));
-      this.toast(errMsg(e));
+    const lang = L.lang || (cv.lang === 'en' ? 'en' : s.lang === 'en' ? 'en' : 'fr');
+    const base = { cv, offer: { company: L.company, role: L.role, text: offerText }, tone: L.tone, mode: L.mode, oldLetter: L.old, lang };
+    const tidy = (t) => (lang === 'en' ? t : NT().autoFix(t).text);
+    const diag = (st) => (st.letter.mode === 'improve' ? letterDiag(st.letter.old, st.letter.company) : null);
+
+    if (!L.multi) {
+      // Une seule lettre, affichée mot à mot pendant la rédaction.
+      this.setState((st) => ({ letter: { ...st.letter, phase: 'busy', text: '', variants: [], vi: 0, diag: null } }));
+      let acc = '';
+      try {
+        const final = await window.CVAI.letterStream(base, (d) => {
+          acc += d;
+          this.setState((st) => ({ letter: { ...st.letter, phase: 'stream', text: acc } }));
+        });
+        this.setState((st) => ({ letter: { ...st.letter, phase: 'done', text: tidy(final), diag: diag(st) } }));
+        this.toast('Lettre rédigée');
+      } catch (e) {
+        this.setState((st) => ({ letter: { ...st.letter, phase: st.letter.text ? 'done' : 'idle' } }));
+        this.toast(errMsg(e));
+      }
+      return;
     }
+
+    // Trois variantes rédigées en parallèle, chacune avec un angle différent.
+    const ANGLES = [['realisation', 'Réalisation phare'], ['motivation', 'Motivation pour l’entreprise'], ['parcours', 'Parcours et progression']];
+    this.setState((st) => ({ letter: { ...st.letter, phase: 'busy', text: '', vi: 0, diag: null, variants: ANGLES.map(([angle, label]) => ({ angle, label, text: '', status: 'busy' })) } }));
+    const upd = (i, o) =>
+      this.setState((st) => {
+        const vs = st.letter.variants.map((x, j) => (j === i ? { ...x, ...o } : x));
+        const shown = vs[st.letter.vi] || vs[0];
+        const finished = vs.every((x) => x.status !== 'busy');
+        return { letter: { ...st.letter, variants: vs, text: shown.text, phase: finished ? (vs.some((x) => x.text) ? 'done' : 'idle') : shown.text ? 'stream' : 'busy', diag: finished ? diag(st) : null } };
+      });
+    await Promise.all(
+      ANGLES.map(async ([angle], i) => {
+        let acc = '';
+        try {
+          const final = await window.CVAI.letterStream({ ...base, angle }, (d) => {
+            acc += d;
+            upd(i, { text: acc });
+          });
+          upd(i, { text: tidy(final), status: 'done' });
+        } catch (e) {
+          upd(i, { status: 'error', error: errMsg(e) });
+        }
+      }),
+    );
+    const n = this.state.letter.variants.filter((x) => x.status === 'done').length;
+    this.toast(n ? n + ' variante' + (n > 1 ? 's' : '') + ' rédigée' + (n > 1 ? 's' : '') + ' : choisissez la vôtre' : 'La rédaction a échoué. Réessayez.');
   }
   authSet(o) {
     this.setState((st) => ({ auth: { ...st.auth, ...o } }));
@@ -889,6 +971,7 @@ export default class App extends React.Component {
     }
   }
   renderVals() {
+    const MK = marketOf(this.state.market);
     const s = this.state,
       v = this.cur(),
       cv = v.cv,
@@ -993,7 +1076,7 @@ export default class App extends React.Component {
         stepNum: steps.indexOf(k) + 1,
         stepTotal: steps.length,
         hint: HINTS[k],
-        tip: TIPS[k],
+        tip: MK.tips[k] || TIPS[k],
         movable: !guided && k !== 'contact',
         upOp: i > 0 ? 1 : 0.35,
         downOp: i >= 0 && i < cv.order.length - 1 ? 1 : 0.35,
@@ -1041,8 +1124,8 @@ export default class App extends React.Component {
       ['name', 'Nom complet', 'Camille Moreau'],
       ['title', 'Intitulé du poste visé', 'Développeuse Full-Stack'],
       ['email', 'E-mail', 'prenom.nom@email.fr'],
-      ['phone', 'Téléphone', '06 00 00 00 00'],
-      ['city', 'Ville', 'Lyon, France'],
+      ['phone', 'Téléphone', MK.phone],
+      ['city', 'Ville', MK.city],
       ['linkedin', 'LinkedIn', 'linkedin.com/in/…'],
       ['github', 'GitHub / Portfolio', 'github.com/…'],
     ].map(([k, label, ph]) => ({
@@ -1246,7 +1329,7 @@ export default class App extends React.Component {
       contactLine: contactLine(view),
       summary: view.summary,
       exps: view.experiences
-        .filter((e) => e.role || e.company)
+        .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .map((e) => ({
           head: e.role + (e.company ? ' — ' + e.company : ''),
           meta: [e.city, dates(e)].filter(Boolean).join(' | '),
@@ -1269,7 +1352,7 @@ export default class App extends React.Component {
       certs: view.certifications.filter((c) => c.name).map((c) => ({ line: [c.name, c.issuer, c.date].filter(Boolean).join(' — ') })),
     };
     pv.exps = view.experiences
-      .filter((e) => e.role || e.company)
+      .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
       .map((e) => ({
         head: e.role + (e.company ? ' — ' + e.company : ''),
         meta: [e.city, dates(e)].filter(Boolean).join(' | '),
@@ -1838,7 +1921,48 @@ export default class App extends React.Component {
       [true, 'Une colonne · police ' + tpl.fontName + ' · sans en-tête ni pied de page'],
       [s.anon || !!cv.contact.email, s.anon ? 'Anonymisation active' : 'Coordonnées dans le corps du document'],
     ].map(([ok, label]) => ({ label, mark: ok ? '✓' : '!', color: ok ? 'var(--ok)' : 'var(--wa)' }));
+    const ANGLE_STATUS = { busy: 'Rédaction…', done: 'Prête', error: 'Échec : réessayez' };
     return {
+      jobSites: MK.sites,
+      market: s.market,
+      setMarket: (k) => {
+        this.setState({ market: k });
+        this.toast('Marché : ' + marketOf(k).label + '. Conseils et rédaction adaptés');
+      },
+      profile: s.profile,
+      setProfile: (o) => this.setState((st) => ({ profile: { ...st.profile, ...o } })),
+      letterOpts: {
+        lang: s.letter.lang || (cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr'),
+        setLang: (k) => this.setState((st) => ({ letter: { ...st.letter, lang: k } })),
+        multi: !!s.letter.multi,
+        setMulti: (on) => this.setState((st) => ({ letter: { ...st.letter, multi: on } })),
+      },
+      letterVariants: (s.letter.variants || []).map((x, i) => ({
+        angle: x.angle,
+        label: x.label,
+        on: i === s.letter.vi,
+        error: x.status === 'error',
+        status: x.status === 'done' ? wc(x.text) + ' mots' : ANGLE_STATUS[x.status] || '',
+        pick: () => this.setState((st) => ({ letter: { ...st.letter, vi: i, text: st.letter.variants[i].text } })),
+      })),
+      letPdfLabel: s.pdfBusy ? 'PDF…' : 'Exporter PDF',
+      exportLetterPdf: () => {
+        if (!s.letter.text.trim() || s.pdfBusy) return;
+        const html = this.letterHtml(), name = 'Lettre_' + (slug(s.letter.company) || 'motivation');
+        this.setState({ pdfBusy: true });
+        this.pdfDownload(html, name).then((ok) => {
+          this.setState({ pdfBusy: false });
+          if (ok) this.toast('Lettre exportée (PDF)');
+          else { this.printHtml(html); this.toast('Service PDF indisponible : utilisez « Enregistrer au format PDF »'); }
+        });
+      },
+      mock: {
+        cv,
+        offer: { company: s.letter.company, role: s.letter.role, text: s.ad.offer || s.letter.offerText || '' },
+        target: s.letter.company || s.letter.role ? 'Pour ' + [s.letter.role, s.letter.company].filter(Boolean).join(' chez ') : 'À partir de votre CV (analysez une offre pour un entretien ciblé)',
+      },
+      impRes: s.imp.res,
+      impShowCompare: s.imp.phase === 'report' || s.imp.phase === 'done',
       nav,
       versionName: v.name,
       score: an.score,
@@ -2119,7 +2243,7 @@ export default class App extends React.Component {
             return (
               'Informations préservées : ' +
               [
-                n(c.experiences.filter((e) => e.role || e.company).length, 'expérience', 'expériences'),
+                n(c.experiences.filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim())).length, 'expérience', 'expériences'),
                 n(c.education.filter((e) => e.degree).length, 'formation', 'formations'),
                 n(c.skills.length, 'compétence', 'compétences'),
                 n(c.languages.length, 'langue', 'langues'),
@@ -2289,10 +2413,10 @@ export default class App extends React.Component {
         old: L.old,
         isImprove: L.mode === 'improve',
         oldLabel: L.oldName ? 'Fichier : ' + L.oldName : 'Importer une lettre existante',
-        done: L.phase === 'done',
-        notDone: L.phase !== 'done',
+        done: L.phase === 'done' || L.phase === 'stream',
+        notDone: L.phase !== 'done' && L.phase !== 'stream',
         btn:
-          L.phase === 'busy'
+          L.phase === 'busy' || L.phase === 'stream'
             ? 'Rédaction…'
             : L.mode === 'improve'
               ? L.phase === 'done'
@@ -2315,11 +2439,13 @@ export default class App extends React.Component {
           L.phase === 'busy' ? 'Rédaction en cours…' : L.mode === 'improve' ? 'Importez votre lettre' : 'Votre lettre apparaîtra ici',
         empty:
           L.phase === 'busy'
-            ? 'L’IA croise votre CV et l’offre.'
+            ? L.multi
+              ? 'Trois versions avec des angles différents sont en cours de rédaction.'
+              : 'L’IA croise votre CV, l’offre et votre profil.'
             : L.mode === 'improve'
               ? 'Déposez un fichier ou collez le texte : diagnostic, score d’impact et version réécrite.'
               : 'Choisissez l’offre visée et le ton, puis générez. Vous pourrez tout modifier ensuite.',
-        meta: wc(L.text) + ' mots · ' + s.letFont + ' ' + String(s.letSize).replace('.', ',') + ' pt',
+        meta: (L.phase === 'stream' ? 'Rédaction en cours… · ' : '') + wc(L.text) + ' mots · ' + s.letFont + ' ' + String(s.letSize).replace('.', ',') + ' pt',
       },
       onLetCompany: (ev) => {
         const val = ev.target.value;

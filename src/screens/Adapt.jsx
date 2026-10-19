@@ -150,7 +150,7 @@ export default function Adapt({ v }) {
                           </button>{' '}
                         </div>{' '}
                         <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
-                          {'LinkedIn, Welcome to the Jungle, Indeed, France Travail, APEC ou site carrière d’entreprise.'}
+                          {v.jobSites}
                         </span>{' '}
                       </>
                     ) : null}{' '}

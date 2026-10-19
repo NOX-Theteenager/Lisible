@@ -35,7 +35,9 @@ export async function genJSON({ system, parts, schema, temperature = 0.4 }) {
   let geminiError = null;
   // RGPD : sur le palier gratuit, Google peut utiliser les contenus pour entraîner ses modèles.
   // Gemini n'est donc utilisé que si la facturation est déclarée active (GEMINI_PAID_TIER=true).
-  if (process.env.GEMINI_API_KEY && process.env.GEMINI_PAID_TIER === 'true') {
+  // AI_PROVIDER=claude force Claude ; AI_PROVIDER=gemini force Gemini sans repli (utile pour l'évaluation).
+  const forced = process.env.AI_PROVIDER;
+  if (forced !== 'claude' && process.env.GEMINI_API_KEY && (process.env.GEMINI_PAID_TIER === 'true' || forced === 'gemini')) {
     try {
       const res = await Promise.race([
         ai().models.generateContent({
@@ -46,7 +48,10 @@ export async function genJSON({ system, parts, schema, temperature = 0.4 }) {
         new Promise((_, rej) => setTimeout(() => rej(new Error('Délai Gemini dépassé')), GEMINI_TIMEOUT())),
       ]);
       return parseJSON(res.text || '');
-    } catch (e) { geminiError = e; }
+    } catch (e) {
+      if (forced === 'gemini') throw e;
+      geminiError = e;
+    }
   }
   if (!process.env.ANTHROPIC_API_KEY) {
     const e = new Error(geminiError ? 'Le service d’IA est momentanément indisponible. Réessayez dans une minute.' : 'Aucune clé d’IA configurée sur le serveur.');
@@ -90,3 +95,21 @@ export function cvForPrompt(cv) {
 }
 
 export function bad(msg) { const e = new Error(msg); e.status = 400; e.expose = true; return e; }
+
+/* ─── Contexte transmis à chaque demande : marché visé, langue, mémoire du profil ─── */
+const MARKETS = {
+  fr: `Marché visé : France. Conventions françaises : CV d'une à deux pages, photo facultative, ni âge ni situation familiale ; lettre ouverte par « Madame, Monsieur, ».`,
+  cm: `Marché visé : Cameroun. Les recruteurs y attendent souvent un CV complet et formel ; le bilinguisme français-anglais est un atout majeur à mettre en avant ; la disponibilité et la mobilité entre villes (Douala, Yaoundé, Garoua, Bafoussam…) comptent ; les organismes cités (entreprises, ministères, ONG, projets financés) doivent être nommés précisément. Les lettres restent formelles : « Madame, Monsieur, » ou « Monsieur le Directeur des Ressources Humaines, », formule de politesse complète.`,
+  afr: `Marché visé : Afrique francophone (Côte d'Ivoire, Sénégal, Maroc, Bénin, Gabon, RDC…). Conventions proches du français, ton formel ; la mobilité régionale, les langues (français, anglais, langues locales) et l'expérience terrain sont valorisées.`,
+  intl: `Marché visé : international ou anglophone. CV de type « resume » sans photo ni informations personnelles, réalisations quantifiées, lettre concise et directe.`,
+};
+
+export function contextPrompt({ market, lang, profile } = {}) {
+  const out = [MARKETS[market] || MARKETS.fr];
+  if (lang === 'en') out.push("Langue de sortie : anglais professionnel (y compris pour le Cameroun anglophone), même si les consignes sont en français.");
+  const p = profile || {};
+  const lines = [['Ce qui la motive', p.motivation], ['Réussites dont elle est fière', p.achievements], ['Contraintes (lieu, disponibilité, contrat…)', p.constraints], ['Ce qu’elle recherche, ses valeurs', p.values]]
+    .filter(([, v]) => v && String(v).trim()).map(([k, v]) => `- ${k} : ${String(v).trim().slice(0, 1200)}`);
+  if (p.use !== false && lines.length) out.push("Informations personnelles données par la personne elle-même (faits utilisables tels quels, à ne pas extrapoler) :\n" + lines.join('\n'));
+  return out.join('\n\n');
+}

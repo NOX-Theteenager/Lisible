@@ -36,7 +36,7 @@ export function docModel(cv, font, size) {
         items:
           k === 'experience'
             ? cv.experiences
-                .filter((e) => e.role || e.company)
+                .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
                 .flatMap((e) => [
                   { type: 'bold', text: e.role + (e.company ? ' — ' + e.company : '') },
                   { type: 'p', text: [e.city, dates(e)].filter(Boolean).join(' | ') },
@@ -101,7 +101,7 @@ export function secText(cv, k) {
       return cv.summary.trim() ? [cv.summary.trim()] : [];
     case 'experience':
       return cv.experiences
-        .filter((e) => e.role || e.company)
+        .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .flatMap((e) => [
           e.role + (e.company ? ' — ' + e.company : ''),
           [e.city, dates(e)].filter(Boolean).join(' | '),
@@ -150,7 +150,7 @@ export function docHtml(cv, tpl) {
     h += `<h2>${labOf(cv, k)}</h2>`;
     if (k === 'experience')
       cv.experiences
-        .filter((e) => e.role || e.company)
+        .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .forEach((e) => {
           h += `<p><b>${esc(e.role)}${e.company ? ' — ' + esc(e.company) : ''}</b></p><p>${esc([e.city, dates(e)].filter(Boolean).join(' | '))}</p><ul>${e.bullets
             .filter((b) => b.trim())

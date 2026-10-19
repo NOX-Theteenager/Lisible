@@ -1,5 +1,8 @@
 import React from 'react';
 import { ps } from '../lib/pseudo.js';
+import ProfileMemory from '../components/ProfileMemory.jsx';
+import LetterOptions from '../components/LetterOptions.jsx';
+import LetterVariants from '../components/LetterVariants.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Letter({ v }) {
@@ -261,7 +264,7 @@ export default function Letter({ v }) {
                       </button>{' '}
                     </div>{' '}
                     <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
-                      {'LinkedIn, Welcome to the Jungle, Indeed, France Travail, APEC ou site carrière d’entreprise.'}
+                      {v.jobSites}
                     </span>{' '}
                   </>
                 ) : null}{' '}
@@ -523,6 +526,7 @@ export default function Letter({ v }) {
                     ))}{' '}
                   </div>{' '}
                 </div>{' '}
+                <LetterOptions v={v} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   {' '}
                   <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
@@ -567,6 +571,7 @@ export default function Letter({ v }) {
                   </button>{' '}
                 </div>{' '}
               </div>{' '}
+              <ProfileMemory v={v} />
             </div>{' '}
             <div style={{ flex: '1 1 520px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {' '}
@@ -827,7 +832,9 @@ export default function Letter({ v }) {
                     >
                       {'Exporter Word'}
                     </button>{' '}
+                    <button onClick={v.exportLetterPdf} style={{ height: '34px', padding: '0 16px', border: '0', borderRadius: '999px', background: 'var(--btn)', color: 'var(--btnfg)', font: 'inherit', fontSize: '12.5px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>{v.letPdfLabel}</button>{' '}
                   </div>{' '}
+                  <LetterVariants v={v} />
                   <div
                     data-no-i18n="1"
                     style={{

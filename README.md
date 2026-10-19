@@ -9,11 +9,14 @@ CV conformes aux ATS, adaptés à chaque offre et écrits dans une langue nature
 | Analyse d'offre (texte, lien, capture, PDF) : mots-clés, exigences, réécritures ciblées | **Gemini** (+ lecture de la page côté serveur) |
 | Suggestions de réalisations, de résumé et de compétences, intégration d'un chiffre, réécriture sans tics | **Gemini** |
 | Préparation d'entretien, pitch, profil LinkedIn, traduction anglaise du CV | **Gemini** |
-| **Lettre de motivation** (nouvelle ou améliorée) | **Claude** (`claude-sonnet-5-5`) |
+| **Lettre de motivation** (nouvelle ou améliorée, affichée au fil de la rédaction, 1 ou 3 variantes) | **Claude** (`claude-sonnet-5-5`) |
+| Simulation d'entretien (questions du recruteur, retour STAR sur chaque réponse, bilan) | **Gemini** (repli Claude) |
+| Mémoire du profil (motivations, réussites, contraintes, valeurs) réutilisée dans les lettres et l'entretien | Préférences synchronisées |
+| Marché visé : France, Cameroun, Afrique francophone, international (conseils, sites d'offres, rédaction) | Préférences + consignes IA |
 | Comptes (e-mail + mot de passe, Google, mot de passe oublié) | **Supabase Auth** |
 | Versions de CV, historique, candidatures, préférences, synchronisation entre appareils | **Supabase** (Postgres + RLS) |
 | Liens de relecture et commentaires des relecteurs (sans compte) | **Supabase** + page `/r/<jeton>` |
-| Exports Word, PDF, TXT, pack ZIP | docx, impression navigateur, JSZip |
+| Exports Word, PDF texte (CV et lettre), TXT, pack ZIP | docx, Chromium (serveur), JSZip |
 | Score ATS, détection des tics d'écriture, anonymisation, cohérence du parcours | Règles locales (navigateur) |
 
 Les clés API restent sur le serveur : le navigateur n'appelle que `/api/*`.
@@ -51,23 +54,55 @@ Sans Supabase, l'application fonctionne en mode invité : tout reste dans le nav
 ## Organisation
 
 ```
+index.html            point d'entrée Vite
+src/
+  main.jsx            démarrage de l'application, enregistrement du service worker
+  App.jsx             état, actions et valeurs affichées (logique héritée du design, découpage progressif)
+  AppView.jsx         assemblage des écrans
+  screens/            un fichier par écran (Home, Editor, Import, Adapt, Letter, Interview, Applications, Settings, Versions)
+    editor/           formulaire, aperçu, panneau de score
+    interview/        MockInterview : simulation d'entretien
+    import/           BeforeAfter : comparaison avant / après
+  overlays/           fenêtres (connexion, export, partage, modèles, menu mobile, notifications)
+  layout/             barre latérale, en-tête, navigation mobile
+  components/         composants partagés (ui, mémoire du profil, options et variantes de lettre, marché)
+  lib/                logique pure : cv, ats, templates, content, letters, applications, storage, markets, facts
+  services/           API serveur, Supabase, IA, extraction PDF/DOCX, exports, traduction de l'interface
 server/
-  index.js        serveur Express : fichiers statiques, /api/config, /api/ai/:tâche, /api/letter, /api/offer/fetch
-  tasks.js        tâches Gemini (import, offre, réécritures, entretien, traduction, OCR)
-  claude.js       rédaction de la lettre de motivation avec Claude
-  gemini.js       client Gemini, schéma JSON du CV, consignes d'écriture
-  fetch-offer.js  lecture d'une page d'offre (JSON-LD JobPosting, protection SSRF)
-public/
-  index.html      l'application (design Claude Design, logique branchée sur les services)
-  api.js          configuration, client Supabase, appels au serveur
-  ai-adapter.js   window.CVAI : fonctions IA appelées par l'interface
-  auth-adapter.js window.CVAuth : Supabase Auth
-  store.js        window.CVStore : synchronisation des données, partage, commentaires
-  extract.js      window.CVExtract : extraction PDF/DOCX dans le navigateur
-  review.html     page publique de relecture (/r/<jeton>)
-  no-tics.js, i18n.js, exporters.js, support.js : modules du design d'origine
-supabase/schema.sql   tables, règles de sécurité (RLS), fonctions de partage
+  index.js            Express : API, Vite en développement, dist/ en production
+  tasks.js            tâches d'IA (Gemini, repli Claude) dont la simulation d'entretien
+  claude.js           lettres de motivation (réponse progressive, variantes) et repli JSON
+  gemini.js           client Gemini, contexte (marché, langue, profil), schéma du CV
+  pdf.js              PDF texte avec Chromium sans interface ; polices libres dans pdf-fonts/
+  fetch-offer.js      lecture des pages d'offres (protection SSRF)
+  security.js         en-têtes de sécurité
+public/               fichiers statiques (icônes, polices, pages légales, relecture, service worker)
+evals/                jeu d'évaluation (10 cas) et référence
+design/               fichiers d'origine Claude Design (référence, non déployés)
+scripts/              copie des bibliothèques ; migration/ : conversion unique du design en React
 ```
+
+## Développement
+
+```bash
+npm run dev     # http://localhost:3000, rechargement à chaud
+npm run build   # construit dist/
+npm start       # construit puis sert dist/ comme en production
+```
+
+Le PDF est généré par Chromium : en local, Chrome installé est utilisé (ou `CHROME_PATH`) ; sur Vercel, `@sparticuz/chromium`.
+
+## Évaluation de la qualité
+
+`evals/cases.json` contient 10 CV et offres fictifs (France, Cameroun francophone et anglophone, Côte d'Ivoire, Sénégal, Maroc, international). Chaque passage vérifie l'import (faits perdus ou inventés), l'analyse d'offre, les suggestions et la lettre (longueur, langue, entreprise citée, chiffres inventés, clichés, repères à compléter), puis compare à `evals/baseline.json`.
+
+```bash
+npm run eval -- --provider=claude            # ou gemini, ou sans option (fournisseur actuel)
+npm run eval -- --only=cm-comptable-douala   # un ou plusieurs cas
+npm run eval -- --save-baseline              # enregistre la référence
+```
+
+Lancez-le après chaque changement de consigne ou de modèle (par exemple un nouveau `GEMINI_MODEL`) : une régression fait échouer la commande. Chaque cas coûte 4 appels d'API. Vous pouvez ajouter vos propres CV anonymisés dans `cases.json`.
 
 ## Notes
 
