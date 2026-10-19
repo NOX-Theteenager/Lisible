@@ -58,14 +58,15 @@ async function withGemini(p) {
   return out;
 }
 
-async function withClaude(p, force = false) {
+async function withClaude(p) {
   if (!ant) ant = new Anthropic();
   const messages = [{ role: 'user', content: p.user }];
   const seen = new Map();
   let res;
   for (let i = 0; i < 4; i++) {
     res = await ant.beta.messages.create({
-      ...(force && i === 0 ? { tool_choice: { type: 'any' } } : {}),
+      // Recherche imposée au premier tour : sans cela, le modèle répond parfois de mémoire.
+      ...(i === 0 ? { tool_choice: { type: 'any' } } : {}),
       model: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5',
       max_tokens: 8000,
       betas: ['server-side-fallback-2026-07-01'],
@@ -80,8 +81,6 @@ async function withClaude(p, force = false) {
     messages.push({ role: 'assistant', content: res.content });
   }
   if (res.stop_reason === 'refusal') throw Object.assign(new Error('La recherche a été refusée par le modèle.'), { status: 422, expose: true });
-  // Réponse sans aucune recherche : on relance une fois en imposant la recherche web.
-  if (!seen.size && !force) return withClaude(p, true);
   const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
   const out = JSON.parse(text);
   // On ne garde que des sources réellement renvoyées par la recherche.
