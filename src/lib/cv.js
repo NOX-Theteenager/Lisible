@@ -21,7 +21,10 @@ export const LABELS_EN = {
   projects: 'Projects',
   certifications: 'Certifications',
 };
-export const labOf = (cv, k) => (cv && cv.lang === 'en' ? LABELS_EN : LABELS)[k];
+/* CV académique (mode Études) : mêmes sections, intitulés adaptés aux candidatures à une formation. */
+export const LABELS_AC = { ...LABELS, summary: 'Projet d’études', experience: 'Stages et expériences', projects: 'Projets et travaux académiques', certifications: 'Distinctions et certifications' };
+export const LABELS_AC_EN = { ...LABELS_EN, summary: 'Academic Profile', experience: 'Internships and Experience', projects: 'Academic Projects and Research', certifications: 'Honours and Certifications' };
+export const labOf = (cv, k) => (cv && cv.kind === 'academic' ? (cv.lang === 'en' ? LABELS_AC_EN : LABELS_AC) : cv && cv.lang === 'en' ? LABELS_EN : LABELS)[k];
 export function docModel(cv, font, size) {
   return {
     size: size || 10.5,

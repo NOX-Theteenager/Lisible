@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { isStudy } from './context.js';
 
 let client = null;
 const MODEL = () => process.env.GEMINI_MODEL || 'gemini-3.6-flash';
@@ -104,8 +105,19 @@ const MARKETS = {
   intl: `Marché visé : international ou anglophone. CV de type « resume » sans photo ni informations personnelles, réalisations quantifiées, lettre concise et directe.`,
 };
 
+const MARKETS_STUDY = {
+  fr: `Contexte : candidature à une formation en France (Parcoursup, Mon Master, écoles, admissions parallèles). Les jurys attendent un projet clair et argumenté, sans formules toutes faites.`,
+  cm: `Contexte : personne basée au Cameroun, qui candidate au Cameroun ou à l'étranger (souvent la France via Campus France « Études en France », mais aussi le Canada, la Belgique ou l'Allemagne). Pour une mobilité, le jury et le conseiller Campus France vérifient la cohérence du projet, le choix du pays, la maîtrise de la langue, le financement et le projet après les études. Le bilinguisme français-anglais est un atout.`,
+  afr: `Contexte : personne basée en Afrique francophone, qui candidate localement ou à l'étranger (Campus France, Canada, Maroc, Sénégal…). Le jury vérifie la cohérence du projet, le choix du pays et de l'établissement, la langue, le financement et le projet après les études.`,
+  intl: `Contexte : candidature à un programme international ou anglophone (graduate admissions). Les comités attendent un texte personnel et précis : expérience académique, intérêts, adéquation avec le programme et objectifs.`,
+};
+
+/* Mode Études : mêmes outils, mais pour une candidature à une formation. */
+const STUDY = `Objectif de la personne : candidater à une FORMATION (licence, master, école, doctorat, échange, bourse), pas à un emploi. Dans les données, « offre » désigne la présentation de la formation ou l'appel à candidatures, « entreprise » l'établissement, « poste » la formation visée, et « recruteur » le jury d'admission.
+Ce qui compte pour un jury : la cohérence du parcours et du projet d'études, les raisons précises du choix de cette formation et de cet établissement, les résultats et travaux académiques (mémoire, projets, stages, engagements), le projet professionnel qui suit la formation, et pour une mobilité internationale le choix du pays et la faisabilité (langue, financement). N'invente ni note, ni classement, ni mention : laisse un repère entre crochets s'il manque une information.`;
+
 export function contextPrompt({ market, lang, profile } = {}) {
-  const out = [MARKETS[market] || MARKETS.fr];
+  const out = isStudy() ? [MARKETS_STUDY[market] || MARKETS_STUDY.fr, STUDY] : [MARKETS[market] || MARKETS.fr];
   if (lang === 'en') out.push("Langue de sortie : anglais professionnel (y compris pour le Cameroun anglophone), même si les consignes sont en français.");
   const p = profile || {};
   const lines = [['Ce qui la motive', p.motivation], ['Réussites dont elle est fière', p.achievements], ['Contraintes (lieu, disponibilité, contrat…)', p.constraints], ['Ce qu’elle recherche, ses valeurs', p.values]]
@@ -130,6 +142,12 @@ export function offerInsights(an) {
 export const INTERVIEW_TONES = {
   kind: "Style : bienveillant·e et encourageant·e. Tu mets la personne à l'aise ; relances douces quand une réponse est floue.",
   tough: "Style : exigeant·e et direct·e, comme un entretien difficile. Tu relances systématiquement une réponse vague (« Concrètement ? », « Quel résultat chiffré ? »), tu peux contredire poliment ou pointer une faiblesse du CV. Jamais agressif·ve ni humiliant·e.",
+  campus: "Style : entretien pédagogique Campus France (« Études en France »), mené par un·e conseiller·ère. Ton neutre et vérificateur. Questions attendues : présentation et parcours (y compris les années de rupture ou de réorientation), projet d'études et cohérence avec le parcours, choix de la France, de la formation et de l'établissement, connaissance du programme, financement des études et du séjour, projet professionnel et retour éventuel. Tu demandes des précisions quand une réponse reste vague.",
   panel: "Style : entretien en panel avec deux personnes. Une responsable RH (motivation, comportement, adéquation avec l'entreprise) et un·e manager opérationnel·le (questions métier et mises en situation). Elles alternent ; à chaque question, la personne qui parle se nomme (« Ici [prénom], manager de l'équipe… »).",
 };
 export const toneOf = (t) => INTERVIEW_TONES[t] || INTERVIEW_TONES.kind;
+/* Rôle de l'interlocuteur selon l'objectif (emploi ou études). */
+export const interviewerRole = () =>
+  isStudy()
+    ? "membre d'un jury d'admission (ou conseiller·ère Campus France selon le style) qui mène un entretien d'admission pour la formation ci-dessous"
+    : "recruteur·se exigeant·e mais bienveillant·e qui mène un entretien d'embauche pour le poste ci-dessous";

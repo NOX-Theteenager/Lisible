@@ -17,6 +17,8 @@ export default function MockInterview({ v }) {
   const [lang, setLang] = useState(m.lang === 'en' ? 'en' : 'fr');
   const [tone, setTone] = useState('kind');
   const [vox, setVox] = useState('f');
+  // Le style « panel » n'existe qu'en mode Emploi, « Campus France » qu'en mode Études.
+  useEffect(() => { if ((m.study && tone === 'panel') || (!m.study && tone === 'campus')) setTone('kind'); }, [m.study]);
   const opts = { total, lang, tone, voice: vox };
   const H_ = v.ivHist || {};
   // Chaque séance terminée rejoint l'historique (appareil, et compte si connecté).
@@ -33,13 +35,13 @@ export default function MockInterview({ v }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <H>Simulation d’entretien</H>
-          <Muted>{m.target}. {voice ? 'Le recruteur vous parle, vous répondez à voix haute ; vos réponses sont commentées avec la méthode STAR à la fin.' : 'Le recruteur pose une question à la fois ; chaque réponse est commentée avec la méthode STAR.'}</Muted>
+          <Muted>{m.target}. {m.study ? (voice ? 'Le jury vous parle, vous répondez à voix haute ; vos réponses sont commentées à la fin.' : 'Le jury pose une question à la fois ; chaque réponse est commentée.') : voice ? 'Le recruteur vous parle, vous répondez à voix haute ; vos réponses sont commentées avec la méthode STAR à la fin.' : 'Le recruteur pose une question à la fois ; chaque réponse est commentée avec la méthode STAR.'}</Muted>
         </div>
         {live && !locked ? <Seg value={mode} options={[['voice', '🎙 Vocal'], ['text', 'Écrit']]} onChange={setMode} /> : null}
       </div>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', fontSize: '11.5px', fontWeight: 600 }}>
-        <span style={{ color: 'var(--mu)' }}>Le recruteur s’appuie sur :</span>
-        {[['Votre CV', true], ['Votre profil', !!(m.profile && m.profile.use !== false && [m.profile.motivation, m.profile.achievements, m.profile.constraints, m.profile.values].some(x => x && x.trim()))], ['L’analyse de l’offre', !!m.analysis], ['La fiche entreprise', !!(m.brief && m.brief.found)]].map(([l, on]) => (
+        <span style={{ color: 'var(--mu)' }}>{m.study ? 'Le jury s’appuie sur :' : 'Le recruteur s’appuie sur :'}</span>
+        {[['Votre CV', true], ['Votre profil', !!(m.profile && m.profile.use !== false && [m.profile.motivation, m.profile.achievements, m.profile.constraints, m.profile.values].some(x => x && x.trim()))], [m.study ? 'L’analyse de la formation' : 'L’analyse de l’offre', !!m.analysis], [m.study ? 'La fiche établissement' : 'La fiche entreprise', !!(m.brief && m.brief.found)]].map(([l, on]) => (
           <span key={l} style={{ padding: '2px 8px', borderRadius: '999px', background: on ? 'var(--oks)' : 'var(--sub)', color: on ? 'var(--ok)' : 'var(--fa)' }}>{on ? '✓' : '–'} {l}</span>
         ))}
       </div>
@@ -47,7 +49,7 @@ export default function MockInterview({ v }) {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Questions</span><Seg value={String(total)} options={[['3', '3'], ['5', '5'], ['8', '8']]} onChange={k => setTotal(Number(k))} /></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Langue de l’entretien</span><Seg value={lang} options={[['fr', 'Français'], ['en', 'English']]} onChange={setLang} /></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Recruteur</span><Seg value={tone} options={[['kind', 'Bienveillant'], ['tough', 'Exigeant'], ['panel', 'Panel (RH + manager)']]} onChange={setTone} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>{m.study ? 'Jury' : 'Recruteur'}</span><Seg value={tone} options={m.study ? [['kind', 'Bienveillant'], ['tough', 'Exigeant'], ['campus', 'Entretien Campus France']] : [['kind', 'Bienveillant'], ['tough', 'Exigeant'], ['panel', 'Panel (RH + manager)']]} onChange={setTone} /></div>
           {voice ? <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Voix</span><Seg value={vox} options={[['f', 'Féminine'], ['m', 'Masculine']]} onChange={setVox} /></div> : null}
         </div>
       ) : null}
@@ -97,12 +99,12 @@ function TextInterview({ m, opts, onLock, onSave }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '560px', overflow: 'auto', padding: '2px' }}>
           {turns.map((t, i) => (
             <React.Fragment key={i}>
-              <div style={bubble(false)}><strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>Recruteur · question {i + 1}/{total}</strong>{t.q}</div>
+              <div style={bubble(false)}><strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>{m.study ? 'Jury' : 'Recruteur'} · question {i + 1}/{total}</strong>{t.q}</div>
               <div style={bubble(true)}>{t.a}</div>
               <Feedback f={t.feedback} />
             </React.Fragment>
           ))}
-          {question ? <div style={bubble(false)}><strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>Recruteur · question {turns.length + 1}/{total}</strong>{question}</div> : null}
+          {question ? <div style={bubble(false)}><strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>{m.study ? 'Jury' : 'Recruteur'} · question {turns.length + 1}/{total}</strong>{question}</div> : null}
           {busy ? <Muted>{turns.length ? 'Le recruteur analyse votre réponse…' : 'Le recruteur prépare sa première question…'}</Muted> : null}
           <Summary s={summary} />
           <span ref={end} />

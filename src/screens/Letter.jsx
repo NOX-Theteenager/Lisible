@@ -457,7 +457,7 @@ export default function Letter({ v }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {' '}
                   <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--mu)' }}>{'Entreprise'}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--mu)' }}>{v.study ? 'Établissement' : 'Entreprise'}</span>
                     <input
                       value={v.letter?.company ?? ''}
                       onChange={v.onLetCompany}
@@ -477,7 +477,7 @@ export default function Letter({ v }) {
                     />
                   </label>{' '}
                   <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--mu)' }}>{'Poste visé'}</span>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--mu)' }}>{v.study ? 'Formation visée' : 'Poste visé'}</span>
                     <input
                       value={v.letter?.role ?? ''}
                       onChange={v.onLetRole}

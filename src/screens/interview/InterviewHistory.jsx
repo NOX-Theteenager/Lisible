@@ -5,7 +5,7 @@ import { Card, H, Muted, Btn } from '../../components/ui.jsx';
 import { Feedback, Summary, bubble } from './Feedback.jsx';
 import OralReport from './OralReport.jsx';
 
-const TONES = { kind: 'Bienveillant', tough: 'Exigeant', panel: 'Panel' };
+const TONES = { kind: 'Bienveillant', tough: 'Exigeant', panel: 'Panel', campus: 'Campus France' };
 const col = (n) => (n >= 8 ? 'var(--ok)' : n >= 5 ? 'var(--wa)' : 'var(--er)');
 const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
 

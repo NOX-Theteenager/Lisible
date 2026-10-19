@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { cvForPrompt, bad, contextPrompt } from './gemini.js';
 import { briefPrompt } from './research.js';
+import { isStudy } from './context.js';
 
 let client = null;
 const MODEL = () => process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
@@ -74,6 +75,34 @@ Interdits absolus :
 
 Format de sortie : uniquement le corps de la lettre, de la formule d'appel (« Madame, Monsieur, » ou le nom du contact s'il figure dans l'offre) jusqu'à la formule de politesse finale incluse, paragraphes séparés par une ligne vide. Pas d'en-tête, pas d'objet, pas de signature, pas de commentaire avant ou après.`;
 
+/* ─── Mode Études : documents de candidature à une formation ─── */
+const SYSTEM_STUDY = `Tu aides une personne à écrire ses documents de candidature à une formation (lettre de motivation, projet d'études, statement of purpose, personal statement). Le texte doit sonner comme si elle l'avait écrit elle-même : un jury lit des centaines de dossiers et repère tout de suite les textes génériques.
+
+Ce qui rend le texte convaincant pour un jury :
+- Un lien précis entre le parcours de la personne et ce que la formation propose (un élément concret de la présentation fournie : cours, spécialisation, projet, stage, laboratoire, débouché).
+- Un ou deux travaux réels tirés du CV (projet, mémoire, stage, engagement, emploi) racontés avec leur contexte et ce que la personne en a tiré, plutôt qu'une liste de qualités.
+- Un projet professionnel clair après la formation, et pour une mobilité à l'étranger les raisons du choix du pays et de l'établissement.
+- Une voix : phrases de longueurs variées, vocabulaire simple et précis, aucune formule toute faite.
+
+Interdits absolus :
+- Inventer une note, une mention, un classement, un cours, un professeur, un fait, un chiffre ou une motivation absents du CV, de la présentation de la formation, de la fiche établissement ou de ce que la personne a dit d'elle. S'il manque un élément personnel, écris un repère entre crochets que la personne complétera, comme [le cours du programme qui vous attire le plus].
+- Clichés : « depuis mon plus jeune âge », « j'ai toujours été passionné·e », « votre prestigieux établissement », « c'est avec un grand intérêt », « je me permets », « motivé·e », « rigoureux·se », « dynamique », « relever de nouveaux défis », « dans l'attente de votre réponse ».
+- Tirets cadratins et demi-cadratins, questions rhétoriques, énumérations systématiques par trois, plus de trois phrases commençant par « Je ».`;
+
+const DOCS = {
+  lettre: { what: 'une lettre de motivation pour cette formation', len: '250 à 380 mots pour le corps', letter: true },
+  projet: { what: "un « projet d'études » ou « projet de formation motivé » à coller dans une plateforme de candidature (Campus France, Parcoursup, Mon Master…)", len: 'entre 1 200 et 1 500 caractères espaces compris' },
+  sop: { what: 'un statement of purpose (parcours académique, intérêts, raisons du choix du programme, objectifs)', len: '600 à 900 mots' },
+  ps: { what: 'un personal statement (motivation pour la discipline, ce que la personne a fait pour l’explorer, ce qu’elle apportera)', len: 'au plus 4 000 caractères espaces compris' },
+};
+export const DOC_KINDS = Object.keys(DOCS);
+
+const ANGLES_STUDY = {
+  realisation: 'Construis le texte autour du travail le plus marquant du parcours (projet, mémoire, stage ou engagement) et de ce qu’il a révélé de l’intérêt de la personne pour cette formation.',
+  motivation: 'Construis le texte autour du choix de cette formation et de cet établissement précis (éléments concrets de la présentation, de la fiche établissement), en t’appuyant sur ce que la personne a dit de ses motivations.',
+  parcours: 'Construis le texte autour de la cohérence du parcours et du projet professionnel : comment chaque étape mène à cette formation, et ce qu’elle permettra ensuite.',
+};
+
 /* Angles proposés pour les variantes de lettre. */
 export const ANGLES = {
   realisation: 'Construis la lettre autour de la réalisation la plus forte et la plus pertinente du CV pour ce poste : contexte, action, résultat, puis ce que cela apportera à l’entreprise.',
@@ -81,10 +110,11 @@ export const ANGLES = {
   parcours: 'Construis la lettre autour de la cohérence du parcours : comment chaque étape mène logiquement à ce poste, et la progression qu’il représente.',
 };
 
-function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, angle, brief: company }) {
+export function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, angle, brief: company, doc, limit }) {
   const o = offer || {};
   if (!cv || !cv.contact) throw bad('CV manquant');
-  if (!String(o.company || '').trim() || !String(o.role || '').trim()) throw bad('Indiquez l’entreprise et le poste visé.');
+  const study = isStudy();
+  if (!String(o.company || '').trim() || !String(o.role || '').trim()) throw bad(study ? 'Indiquez l’établissement et la formation visée.' : 'Indiquez l’entreprise et le poste visé.');
   if (mode === 'improve' && !String(oldLetter || '').trim()) throw bad('Importez ou collez d’abord votre lettre.');
   const en = lang === 'en';
   const brief = [
@@ -97,9 +127,23 @@ function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, 
   ];
   const info = briefPrompt(company);
   if (info) brief.push(`${info}\nPour le lien avec l'entreprise, appuie-toi sur UN élément précis de cette fiche (une activité, une actualité, un engagement) relié à l'expérience de la personne, formulé simplement et sans flatterie. N'utilise que ce qui figure dans la fiche ; si la personne a donné ses propres motivations, elles priment.`);
-  if (ANGLES[angle]) brief.push('Angle de cette version : ' + ANGLES[angle]);
+  const D = study ? DOCS[doc] || DOCS.lettre : null;
+  const max = Number(limit) >= 300 && Number(limit) <= 20_000 ? Math.round(Number(limit)) : 0;
+  if (study) {
+    brief[0] = `Langue du texte : ${en ? 'anglais' : 'français'}.`;
+    brief[3] = `Établissement : ${o.company}\nFormation visée : ${o.role}`;
+    brief[4] = `Présentation de la formation ou appel à candidatures :\n${String(o.text || '').slice(0, 20_000) || '(non fournie : appuie-toi sur l’intitulé de la formation et laisse un repère pour ce qui attire la personne dans le programme)'}`;
+    // Les modèles comptent mal les caractères : on vise 85 % de la limite, exprimés aussi en mots (≈ 6,3 caractères par mot).
+    const target = Math.floor(max * 0.85);
+    brief.push(`Document à écrire : ${D.what}. Longueur : ${max ? `${target} caractères environ, soit à peu près ${Math.round(target / 6.3)} mots ; la plateforme refuse tout texte de plus de ${max} caractères espaces compris, donc reste nettement en dessous` : D.len}.`);
+    brief.push(D.letter
+      ? `Format de sortie : uniquement le corps de la lettre, de la formule d'appel (« Madame, Monsieur, » ou le nom du ou de la responsable de formation s'il est fourni${en ? ' ; en anglais « Dear Admissions Committee, »' : ''}) jusqu'à la formule de politesse finale incluse, paragraphes séparés par une ligne vide. Pas d'en-tête, pas d'objet, pas de signature, pas de commentaire.`
+      : `Format de sortie : uniquement le texte, en paragraphes séparés par une ligne vide, sans titre, sans formule d'appel ni signature, sans commentaire.`);
+  }
+  const ANG = study ? ANGLES_STUDY : ANGLES;
+  if (ANG[angle]) brief.push('Angle de cette version : ' + ANG[angle]);
   if (mode === 'improve') brief.push(`Lettre actuelle de la personne, à améliorer. Garde ce qui est vrai et personnel dans sa version (anecdotes, raisons, faits), retire les formules creuses, ajoute les preuves chiffrées du CV et le lien explicite avec l'offre :\n${String(oldLetter).slice(0, 12_000)}`);
-  else brief.push('Écris une nouvelle lettre.');
+  else brief.push(study ? 'Écris un nouveau texte.' : 'Écris une nouvelle lettre.');
 
   const c = cv.contact;
   const contactLine = [c.city, c.phone, c.email, c.linkedin, c.github].filter(x => x && String(x).trim()).join(' | ');
@@ -107,11 +151,15 @@ function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, 
   const today = new Date().toLocaleDateString(en ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   const head = [c.name, contactLine].filter(Boolean).join('\n');
   const recipient = [o.company, en ? (city ? city + ', ' : '') + today : (city ? city + ', le ' : 'Le ') + today].join('\n');
-  const object = en ? `Subject: Application for the ${o.role} position` : `Objet : candidature au poste de ${o.role}`;
+  const object = study
+    ? en ? `Subject: Application for ${o.role}` : `Objet : candidature à la formation ${o.role}`
+    : en ? `Subject: Application for the ${o.role} position` : `Objet : candidature au poste de ${o.role}`;
+  // Projet d'études, statement of purpose et personal statement se collent dans un formulaire : ni en-tête ni signature.
+  const bare = study && !D.letter;
   return {
-    request: { model: MODEL(), max_tokens: 16000, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default', output_config: { effort: 'high' }, system: SYSTEM, messages: [{ role: 'user', content: brief.join('\n\n') }] },
-    top: `${head}\n\n${recipient}\n\n${object}\n\n`,
-    signature: `\n\n${c.name || ''}`,
+    request: { model: MODEL(), max_tokens: 16000, betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default', output_config: { effort: 'high' }, system: study ? SYSTEM_STUDY : SYSTEM, messages: [{ role: 'user', content: brief.join('\n\n') }] },
+    top: bare ? '' : `${head}\n\n${recipient}\n\n${object}\n\n`,
+    signature: bare ? '' : `\n\n${c.name || ''}`,
   };
 }
 

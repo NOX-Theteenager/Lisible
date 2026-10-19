@@ -8,6 +8,7 @@ import { APP_COLS, HINTS, IMPORT_STEPS, LEVELS_EN, LEVELS_FR, LIB, TIPS, UI_EN, 
 import {
   LABELS,
   LABELS_EN,
+  LABELS_AC,
   anonCv,
   blankVersion,
   contactLine,
@@ -152,6 +153,7 @@ export default class App extends React.Component {
         vi: (W.letter && W.letter.vi) || 0,
       },
       market: (saved && saved.market) || 'fr',
+      track: (saved && saved.track) || 'job',
       profile: (saved && saved.profile) || { motivation: '', achievements: '', constraints: '', values: '', use: true },
       brief: (saved && saved.brief) || null,
       briefBusy: false,
@@ -318,6 +320,7 @@ export default class App extends React.Component {
       'letter',
       'iv',
       'market',
+      'track',
       'profile',
       'brief',
     ];
@@ -346,7 +349,7 @@ export default class App extends React.Component {
   applySettings(set) {
     const W = set.work || {},
       o = {};
-    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'profile', 'brief'].forEach((k) => {
+    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'track', 'profile', 'brief'].forEach((k) => {
       if (set[k] != null) o[k] = set[k];
     });
     this.setState((st) => ({
@@ -530,7 +533,7 @@ export default class App extends React.Component {
   }
   syncContext() {
     const s = this.state, cv = this.cur().cv;
-    const ctx = { market: s.market, lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr', profile: s.profile };
+    const ctx = { market: s.market, track: s.track, lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr', profile: s.profile };
     const key = JSON.stringify(ctx);
     if (key !== this._ctxKey && window.LisibleAPI) { this._ctxKey = key; window.LisibleAPI.setContext(ctx); }
   }
@@ -969,14 +972,15 @@ export default class App extends React.Component {
       return;
     }
     if (!L.company.trim() || !L.role.trim()) {
-      this.toast('Indiquez l’entreprise et le poste visé');
+      this.toast(s.track === 'study' ? 'Indiquez l’établissement et la formation visée' : 'Indiquez l’entreprise et le poste visé');
       return;
     }
     const cv = s.anon ? anonCv(this.cur().cv) : this.cur().cv;
     const offerText = (L.src === 'offer' ? s.ad.offer || L.offerText : L.offerText || s.ad.offer) || '';
     const lang = L.lang || (cv.lang === 'en' ? 'en' : s.lang === 'en' ? 'en' : 'fr');
     const brief = s.brief && s.brief.data && s.brief.data.found && s.brief.key === briefKey(L.company) ? s.brief.data : null;
-    const base = { cv, offer: { company: L.company, role: L.role, text: offerText }, tone: L.tone, mode: L.mode, oldLetter: L.old, lang, brief };
+    const study = s.track === 'study';
+    const base = { cv, offer: { company: L.company, role: L.role, text: offerText }, tone: L.tone, mode: L.mode, oldLetter: L.old, lang, brief, ...(study ? { doc: L.doc || 'lettre', limit: Number(L.limit) || 0 } : {}) };
     const tidy = (t) => (lang === 'en' ? t : NT().autoFix(t).text);
     const diag = (st) => (st.letter.mode === 'improve' ? letterDiag(st.letter.old, st.letter.company) : null);
 
@@ -999,7 +1003,10 @@ export default class App extends React.Component {
     }
 
     // Trois variantes rédigées en parallèle, chacune avec un angle différent.
-    const ANGLES = [['realisation', 'Réalisation phare'], ['motivation', 'Motivation pour l’entreprise'], ['parcours', 'Parcours et progression']];
+    const ANGLES =
+      s.track === 'study'
+        ? [['realisation', 'Travail marquant'], ['motivation', 'Choix de la formation'], ['parcours', 'Parcours et projet']]
+        : [['realisation', 'Réalisation phare'], ['motivation', 'Motivation pour l’entreprise'], ['parcours', 'Parcours et progression']];
     this.setState((st) => ({ letter: { ...st.letter, phase: 'busy', text: '', vi: 0, diag: null, variants: ANGLES.map(([angle, label]) => ({ angle, label, text: '', status: 'busy' })) } }));
     const upd = (i, o) =>
       this.setState((st) => {
@@ -1151,7 +1158,7 @@ export default class App extends React.Component {
       const i = cv.order.indexOf(k),
         open = guided || !!s.open[k];
       return {
-        label: LABELS[k],
+        label: (cv.kind === 'academic' ? LABELS_AC : LABELS)[k],
         meta: meta[k],
         guided,
         blocks: !guided,
@@ -1193,7 +1200,7 @@ export default class App extends React.Component {
       const on = i === stepIdx,
         done = filled[k];
       return {
-        label: LABELS[k].replace(/ professionnel(le)?/, ''),
+        label: (cv.kind === 'academic' ? LABELS_AC : LABELS)[k].replace(/ professionnel(le)?/, ''),
         num: done && !on ? '✓' : String(i + 1),
         bg: on ? 'var(--btn)' : 'var(--panel)',
         bd: on ? 'var(--btn)' : 'var(--line)',
@@ -2045,6 +2052,23 @@ export default class App extends React.Component {
         this.setState({ market: k });
         this.toast('Marché : ' + marketOf(k).label + '. Conseils et rédaction adaptés');
       },
+      study: s.track === 'study',
+      track: s.track,
+      setTrack: (k) => {
+        this.setState({ track: k });
+        this.toast(k === 'study' ? 'Mode Études : lettres, entretiens et conseils pour candidater à une formation' : 'Mode Emploi : candidatures à des postes');
+      },
+      academicCv: cv.kind === 'academic',
+      setAcademicCv: (on) => {
+        const ORDER_AC = ['summary', 'education', 'projects', 'experience', 'skills', 'languages', 'certifications'];
+        const ORDER_JOB = ['summary', 'experience', 'education', 'skills', 'languages', 'projects', 'certifications'];
+        this.mut((c) => {
+          c.kind = on ? 'academic' : '';
+          const want = on ? ORDER_AC : ORDER_JOB;
+          c.order = [...want.filter((k) => c.order.includes(k)), ...c.order.filter((k) => !want.includes(k))];
+        });
+        this.toast(on ? 'CV au format académique : formation en tête, projets et travaux académiques, distinctions' : 'CV au format professionnel');
+      },
       profile: s.profile,
       setProfile: (o) => this.setState((st) => ({ profile: { ...st.profile, ...o } })),
       letterOpts: {
@@ -2052,6 +2076,30 @@ export default class App extends React.Component {
         setLang: (k) => this.setState((st) => ({ letter: { ...st.letter, lang: k } })),
         multi: !!s.letter.multi,
         setMulti: (on) => this.setState((st) => ({ letter: { ...st.letter, multi: on } })),
+        doc: s.letter.doc || 'lettre',
+        setDoc: (k) =>
+          this.setState((st) => ({
+            // Statement of purpose et personal statement s'écrivent en anglais ; la limite suit l'usage de chaque document.
+            letter: { ...st.letter, doc: k, lang: k === 'sop' || k === 'ps' ? 'en' : st.letter.lang, limit: k === 'ps' ? 4000 : k === 'projet' ? 1500 : 0 },
+          })),
+        limit: Number(s.letter.limit) || 0,
+        setLimit: (n) => this.setState((st) => ({ letter: { ...st.letter, limit: Math.max(0, Math.min(20000, Number(n) || 0)) } })),
+        chars: (s.letter.text || '').length,
+        shortening: !!s.letter.shortening,
+        shorten: () => {
+          const L = this.state.letter, max = Number(L.limit) || 0;
+          if (!max || L.shortening || !L.text.trim()) return;
+          this.setState((st) => ({ letter: { ...st.letter, shortening: true } }));
+          window.CVAI.shorten({ text: L.text, limit: max, lang: L.lang })
+            .then((r) => {
+              this.setState((st) => ({ letter: { ...st.letter, text: r.text, shortening: false } }));
+              this.toast(r.text.length <= max ? 'Texte raccourci : ' + r.text.length + ' caractères' : 'Encore ' + (r.text.length - max) + ' caractères de trop : relancez ou coupez à la main');
+            })
+            .catch((e) => {
+              this.setState((st) => ({ letter: { ...st.letter, shortening: false } }));
+              this.toast(errMsg(e));
+            });
+        },
       },
       letterVariants: (s.letter.variants || []).map((x, i) => ({
         angle: x.angle,
@@ -2089,7 +2137,13 @@ export default class App extends React.Component {
         profile: s.profile,
         lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr',
         offer: { company: s.letter.company, role: s.letter.role, text: s.ad.offer || s.letter.offerText || '' },
-        target: s.letter.company || s.letter.role ? 'Pour ' + [s.letter.role, s.letter.company].filter(Boolean).join(' chez ') : 'À partir de votre CV (analysez une offre pour un entretien ciblé)',
+        study: s.track === 'study',
+        target:
+          s.letter.company || s.letter.role
+            ? 'Pour ' + [s.letter.role, s.letter.company].filter(Boolean).join(s.track === 'study' ? ' à ' : ' chez ')
+            : s.track === 'study'
+              ? 'À partir de votre CV (renseignez la formation et l’établissement dans l’onglet Lettre pour un entretien ciblé)'
+              : 'À partir de votre CV (analysez une offre pour un entretien ciblé)',
       },
       impRes: s.imp.res,
       impShowCompare: s.imp.phase === 'report' || s.imp.phase === 'done',
@@ -2175,7 +2229,7 @@ export default class App extends React.Component {
         if (stepIdx < steps.length - 1) this.setState({ step: stepIdx + 1 });
         else this.setState((st) => ({ exp: { ...st.exp, open: true, name: slug(v.name) } }));
       },
-      nextLabel: stepIdx < steps.length - 1 ? 'Suivant : ' + LABELS[steps[stepIdx + 1]] + ' →' : 'Terminer et exporter',
+      nextLabel: stepIdx < steps.length - 1 ? 'Suivant : ' + (cv.kind === 'academic' ? LABELS_AC : LABELS)[steps[stepIdx + 1]] + ' →' : 'Terminer et exporter',
       contactFields,
       summary: cv.summary,
       onSummary: (ev) => {

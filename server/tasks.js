@@ -1,4 +1,4 @@
-import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt, offerInsights, toneOf } from './gemini.js';
+import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt, offerInsights, toneOf, interviewerRole } from './gemini.js';
 import { companyBrief, briefPrompt } from './research.js';
 
 /* Ce que l'on sait du poste et de l'entreprise, ajouté aux consignes d'entretien. */
@@ -203,7 +203,7 @@ async function mockInterview({ cv, offer, history, total, market, lang, profile,
   const o = offer || {}, h = Array.isArray(history) ? history.slice(-12) : [], n = Math.min(Math.max(Number(total) || 5, 3), 10);
   const done = h.length >= n;
   const out = await genJSON({
-    system: `Tu joues le rôle d'un·e recruteur·se exigeant·e mais bienveillant·e qui mène un entretien d'embauche pour le poste ci-dessous, puis tu coaches la personne.
+    system: `Tu joues le rôle d'un·e ${interviewerRole()}, puis tu coaches la personne.
 ${contextPrompt({ market, lang, profile })}
 ${jobContext(analysis, brief)}
 ${toneOf(tone)} Le style ne change rien à l'évaluation : le retour STAR reste juste et constructif.
@@ -221,6 +221,21 @@ ${done ? 'Toutes les questions ont été posées : "nextQuestion" vide, "done" v
   });
   out.done = done;
   return out;
+}
+
+/* Raccourcit un texte de candidature sous une limite de caractères, sans rien perdre d'essentiel ni rien ajouter. */
+async function shorten({ text, limit, lang }) {
+  const max = Math.round(Number(limit) || 0);
+  if (!String(text || '').trim() || max < 300) throw bad('Texte ou limite manquant');
+  const target = Math.floor(max * 0.9);
+  const out = await genJSON({
+    system: `Tu raccourcis un texte de candidature pour qu'il tienne dans la limite d'une plateforme. ${STYLE}
+Vise ${target} caractères environ (limite stricte : ${max} caractères espaces compris). Garde les faits, les exemples concrets et la voix de la personne ; supprime d'abord les répétitions et les phrases générales. N'ajoute rien. Conserve les repères entre crochets. Même langue que le texte${lang === 'en' ? ' (anglais)' : ''}, mêmes paragraphes.`,
+    parts: [{ text: txt(text, 20_000) }],
+    schema: S.obj({ text: S.str }),
+    temperature: 0.3,
+  });
+  return { text: String(out.text || '').trim() };
 }
 
 /* Bilan d'un entretien vocal (Gemini Live) à partir de sa transcription. */
@@ -244,4 +259,4 @@ Pour chaque question principale posée par le recruteur (regroupe les relances a
   });
 }
 
-export const TASKS = { companyBrief, humanize, integrateMetric, suggestBullet, suggestSummary, suggestSkills, parseCv, extractOffer, analyzeOffer, interview, translateCv, ocr, mockInterview, reviewInterview };
+export const TASKS = { companyBrief, shorten, humanize, integrateMetric, suggestBullet, suggestSummary, suggestSkills, parseCv, extractOffer, analyzeOffer, interview, translateCv, ocr, mockInterview, reviewInterview };

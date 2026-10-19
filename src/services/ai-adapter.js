@@ -25,6 +25,7 @@
       ct = c.contact || {};
     const out = {
       order: (base && base.order) || [...ORDER],
+      ...(base && base.kind ? { kind: base.kind } : {}),
       contact: {
         name: s(ct.name),
         title: s(ct.title),
@@ -124,6 +125,8 @@
     mockInterview: (body) => api().ai('mockInterview', body),
     /* Bilan d'un entretien vocal : { items: [{ question, answer, feedback }], summary } */
     reviewInterview: (body) => api().ai('reviewInterview', body),
+    /* Raccourcit un texte sous une limite de caractères : { text } */
+    shorten: (body) => api().ai('shorten', body),
     letter: (payload) =>
       api()
         .letter(payload)

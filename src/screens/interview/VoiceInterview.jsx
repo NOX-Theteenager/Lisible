@@ -12,9 +12,10 @@ const STATES = {
   speaking: ['Le recruteur parle…', 'var(--ai)'],
   listening: ['À vous : je vous écoute', 'var(--ok)'],
 };
+const STATES_STUDY = { ...STATES, connecting: ['Connexion au jury…', 'var(--mu)'], speaking: ['Le jury parle…', 'var(--ai)'] };
 
-function Status({ state, level, muted }) {
-  const [label, col] = muted && state === 'listening' ? ['Micro coupé', 'var(--wa)'] : STATES[state] || ['', 'var(--mu)'];
+function Status({ state, level, muted, study }) {
+  const [label, col] = muted && state === 'listening' ? ['Micro coupé', 'var(--wa)'] : (study ? STATES_STUDY : STATES)[state] || ['', 'var(--mu)'];
   const bars = [0.5, 0.8, 1, 0.8, 0.5];
   return (
     <div role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '14px', background: 'var(--sub)' }}>
@@ -81,7 +82,9 @@ export default function VoiceInterview({ m, opts, onLock, onSave }) {
       {phase === 'idle' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <Muted>
-            Parlez comme en vrai entretien : le recruteur pose ses questions à voix haute et vous laisse répondre. Des écouteurs donnent un meilleur résultat. Votre voix est transmise à Google (Gemini Live) le temps de la conversation ; elle n’est pas enregistrée.
+            {m.study
+              ? 'Parlez comme en vrai entretien : le jury pose ses questions à voix haute et vous laisse répondre. Des écouteurs donnent un meilleur résultat. Votre voix est transmise à Google (Gemini Live) le temps de la conversation ; elle n’est pas enregistrée.'
+              : 'Parlez comme en vrai entretien : le recruteur pose ses questions à voix haute et vous laisse répondre. Des écouteurs donnent un meilleur résultat. Votre voix est transmise à Google (Gemini Live) le temps de la conversation ; elle n’est pas enregistrée.'}
           </Muted>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <Btn kind="ai" onClick={start}>Démarrer l’entretien vocal</Btn>
@@ -91,7 +94,7 @@ export default function VoiceInterview({ m, opts, onLock, onSave }) {
 
       {phase === 'live' ? (
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 240px' }}><Status state={state} level={level} muted={muted} /></div>
+          <div style={{ flex: '1 1 240px' }}><Status state={state} level={level} muted={muted} study={m.study} /></div>
           {state === 'speaking' ? <Btn onClick={() => live.current && live.current.interrupt()}>Prendre la parole</Btn> : null}
           <Btn onClick={toggleMute} disabled={state === 'connecting'}>{muted ? 'Réactiver le micro' : 'Couper le micro'}</Btn>
           <Btn kind="ai" onClick={() => live.current && live.current.stop()}>Terminer l’entretien</Btn>
@@ -103,7 +106,7 @@ export default function VoiceInterview({ m, opts, onLock, onSave }) {
           {review ? <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--mu)', textTransform: 'uppercase', letterSpacing: '.05em' }}>Transcription</span> : null}
           {entries.map((e, i) => (
             <div key={i} style={bubble(e.role === 'candidate')}>
-              {e.role === 'recruiter' ? <strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>Recruteur</strong> : null}
+              {e.role === 'recruiter' ? <strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>{m.study ? 'Jury' : 'Recruteur'}</strong> : null}
               {e.text}
             </div>
           ))}

@@ -1,5 +1,6 @@
 import React from 'react';
 import MarketCard from '../components/MarketCard.jsx';
+import TrackCard from '../components/TrackCard.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Settings({ v }) {
@@ -527,6 +528,7 @@ export default function Settings({ v }) {
                 </span>{' '}
               </div>{' '}
             </div>{' '}
+            <TrackCard v={v} />
             <MarketCard v={v} />
       </div>{' '}
         </>

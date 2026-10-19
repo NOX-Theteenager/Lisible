@@ -8,6 +8,7 @@ import { TASKS } from './tasks.js';
 import { writeLetter, streamLetter } from './claude.js';
 import { fetchOfferPage } from './fetch-offer.js';
 import { securityHeaders } from './security.js';
+import { reqCtx } from './context.js';
 import { createLiveSession, liveEnabled } from './live.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +24,8 @@ app.disable('x-powered-by');
 app.set('trust proxy', 1);
 app.use(securityHeaders);
 app.use(express.json({ limit: '4mb' }));
+// Objectif de la personne (emploi ou études), transmis avec chaque demande d'IA.
+app.use((req, _res, next) => reqCtx.run({ track: req.body && req.body.track === 'study' ? 'study' : 'job' }, next));
 
 /* Identifie l'utilisateur Supabase (facultatif : les invités peuvent utiliser l'IA avec une limite plus basse). */
 async function identify(req, _res, next) {
