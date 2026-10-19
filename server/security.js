@@ -1,6 +1,9 @@
 /* En-têtes de sécurité, identiques à vercel.json (utilisés en local et sur tout hébergeur Node). */
-const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'; upgrade-insecure-requests";
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'; upgrade-insecure-requests";
+const DEV = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
 export function securityHeaders(req, res, next) {
+  // En développement, Vite injecte des scripts en ligne (rechargement à chaud) : pas de CSP.
+  if (DEV) { res.setHeader('X-Content-Type-Options', 'nosniff'); return next(); }
   res.setHeader("Content-Security-Policy", req.secure ? CSP : CSP.replace("; upgrade-insecure-requests", ""));
   if (req.secure) res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   res.setHeader("X-Content-Type-Options", "nosniff");

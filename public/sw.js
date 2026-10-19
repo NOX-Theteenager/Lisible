@@ -1,10 +1,10 @@
 /* Service worker Lisible : application disponible hors ligne, mises à jour en arrière-plan.
    Les appels /api (IA) et Supabase passent toujours par le réseau. */
-const VERSION = 'lisible-v4';
+const VERSION = 'lisible-v5';
 const SHELL = [
-  '/', '/index.html', '/review.html', '/confidentialite.html', '/conditions.html', '/mentions-legales.html', '/legal.css', '/manifest.webmanifest',
-  '/support.js', '/api.js', '/extract.js', '/store.js', '/no-tics.js', '/ai-adapter.js', '/exporters.js', '/i18n.js', '/auth-adapter.js',
-  '/vendor/supabase.js', '/vendor/react.production.min.js', '/vendor/react-dom.production.min.js', '/fonts/fonts.css', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-32.png',
+  '/', '/index.html', '/review.html', '/confidentialite.html', '/conditions.html', '/mentions-legales.html', '/legal.css',
+  '/manifest.webmanifest', '/fonts/fonts.css', '/vendor/supabase.js',
+  '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-32.png',
 ];
 const CDN = [];
 
@@ -35,7 +35,9 @@ self.addEventListener('fetch', e => {
     e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => put(req, res))));
     return;
   }
-  // Scripts et images de l'application : réponse immédiate depuis le cache, mise à jour en arrière-plan.
+  // Fichiers versionnés par Vite (/assets/…-hash.js) : immuables, cache d'abord.
+  if (url.pathname.startsWith('/assets/')) { e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => put(req, res)))); return; }
+  // Autres fichiers : réponse immédiate depuis le cache, mise à jour en arrière-plan.
   e.respondWith(caches.match(req).then(cached => {
     const net = fetch(req).then(res => put(req, res)).catch(() => cached);
     return cached || net;

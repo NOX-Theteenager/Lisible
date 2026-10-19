@@ -75,10 +75,20 @@ app.post('/api/offer/fetch', identify, limiter, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
-/* Fichiers statiques (en local ; sur Vercel, public/ est servi par le CDN). */
-for (const page of ['confidentialite', 'conditions', 'mentions-legales']) app.get('/' + page, (_q, r) => r.sendFile(path.join(root, 'public', page + '.html')));
-app.get('/r/:token', (_q, r) => r.sendFile(path.join(root, 'public', 'review.html')));
-app.use(express.static(path.join(root, 'public'), { extensions: ['html'] }));
+/* Fichiers de l'application. En développement : Vite (rechargement à chaud) ; en production : dist/.
+   Sur Vercel, dist/ est servi directement par le CDN et seule l'API passe par ce serveur. */
+const DEV = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
+const web = path.join(root, DEV ? 'public' : 'dist');
+for (const page of ['confidentialite', 'conditions', 'mentions-legales']) app.get('/' + page, (_q, r) => r.sendFile(path.join(web, page + '.html')));
+app.get('/r/:token', (_q, r) => r.sendFile(path.join(web, 'review.html')));
+if (DEV) {
+  const { createServer } = await import('vite');
+  const vite = await createServer({ root, server: { middlewareMode: true }, appType: 'spa' });
+  app.use(vite.middlewares);
+} else {
+  app.use(express.static(web, { extensions: ['html'] }));
+  app.get(/^\/(?!api\/).*/, (_q, r) => r.sendFile(path.join(web, 'index.html')));
+}
 
 export default app;
 
