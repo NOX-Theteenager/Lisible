@@ -47,7 +47,7 @@ export default class App extends React.Component {
       screen: (() => {
         try {
           const q = new URLSearchParams(location.search).get('screen');
-          return ['import', 'adapt', 'letter', 'editor', 'apps', 'interview'].includes(q) ? q : 'home';
+          return ['import', 'adapt', 'jobs', 'letter', 'editor', 'apps', 'interview'].includes(q) ? q : 'home';
         } catch (e) {
           return 'home';
         }
@@ -154,6 +154,7 @@ export default class App extends React.Component {
       },
       market: (saved && saved.market) || 'fr',
       track: (saved && saved.track) || 'job',
+      savedSearches: (saved && saved.savedSearches) || [],
       profile: (saved && saved.profile) || { motivation: '', achievements: '', constraints: '', values: '', use: true },
       brief: (saved && saved.brief) || null,
       briefBusy: false,
@@ -321,6 +322,7 @@ export default class App extends React.Component {
       'iv',
       'market',
       'track',
+      'savedSearches',
       'profile',
       'brief',
     ];
@@ -349,7 +351,7 @@ export default class App extends React.Component {
   applySettings(set) {
     const W = set.work || {},
       o = {};
-    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'track', 'profile', 'brief'].forEach((k) => {
+    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'track', 'savedSearches', 'profile', 'brief'].forEach((k) => {
       if (set[k] != null) o[k] = set[k];
     });
     this.setState((st) => ({
@@ -1125,6 +1127,7 @@ export default class App extends React.Component {
       editor: ['Éditeur', 'Parcours guidé, aperçu et score de conformité en direct'],
       import: [s.imp.mode === 'simple' ? 'Mise en conformité' : 'Importer un CV', 'Extraction, rapport de conformité et conversion'],
       adapt: ['Adapter à une offre', 'Texte, lien, image ou PDF : l’IA compare l’annonce à votre CV'],
+      jobs: [T.jobs, 'Offres France Travail classées selon votre CV, recherches enregistrées'],
       letter: ['Lettre de motivation', 'Rédigez-en une nouvelle ou améliorez la vôtre, à partir de l’offre visée'],
       versions: ['Versions', 'Sauvegarde, duplication, renommage et historique'],
     };
@@ -1133,6 +1136,7 @@ export default class App extends React.Component {
       ['editor', T.editor, an.score + ''],
       ['import', T.import, ''],
       ['adapt', T.adapt, ''],
+      ...(s.track === 'study' ? [] : [['jobs', T.jobs, '']]),
       ['letter', T.letter, ''],
       ['interview', T.interview, ''],
       ['apps', T.apps, s.apps.length + ''],
@@ -2054,6 +2058,41 @@ export default class App extends React.Component {
       },
       study: s.track === 'study',
       track: s.track,
+      jobs: {
+        cv,
+        market: s.market,
+        sites: MK.sites,
+        defaults: { q: cv.contact.title || (cv.experiences[0] && cv.experiences[0].role) || '', place: s.market === 'fr' ? String(cv.contact.city || '').split(',')[0] : '' },
+        saved: s.savedSearches,
+        saveSearch: (x) => {
+          if (!x.q.trim()) return;
+          if (s.savedSearches.some((y) => y.q === x.q && y.place === x.place && (y.contract || '') === (x.contract || ''))) {
+            this.toast('Recherche déjà enregistrée');
+            return;
+          }
+          this.setState((st) => ({ savedSearches: [{ id: uid(), q: x.q.trim(), place: x.place.trim(), contract: x.contract || '', seen: new Date().toISOString() }, ...st.savedSearches].slice(0, 8) }));
+          this.toast('Recherche enregistrée : les nouvelles offres seront signalées ici');
+        },
+        removeSearch: (id) => this.setState((st) => ({ savedSearches: st.savedSearches.filter((y) => y.id !== id) })),
+        markSeen: (id) => this.setState((st) => ({ savedSearches: st.savedSearches.map((y) => (y.id === id ? { ...y, seen: new Date().toISOString() } : y)) })),
+        // L'annonce part vers les autres écrans ; l'analyse par l'IA ne se lance que sur demande.
+        toAdapt: (o) => {
+          this.go('adapt', { ad: { ...s.ad, phase: 'input', src: 'text', offer: o.title + (o.company ? ' · ' + o.company : '') + '\n\n' + o.description, analysis: null, acc: {}, sk: {}, info: null, srcPhase: 'idle' } });
+          this.toast('Annonce chargée : lancez « Analyser l’offre »');
+        },
+        toLetter: (o) => {
+          this.go('letter', { letter: { ...s.letter, company: o.company || s.letter.company, role: o.title, offerText: o.description } });
+          this.toast('Entreprise, poste et annonce repris dans la lettre');
+        },
+        follow: (o) => {
+          if (s.apps.some((a) => a.offerId === o.id)) {
+            this.toast('Offre déjà suivie dans Candidatures');
+            return;
+          }
+          this.setState((st) => ({ apps: [{ id: uid(), company: o.company || 'Entreprise', role: o.title, status: 'todo', date: '', next: 'Envoyer la candidature', version: st.currentId, kw: [], offer: o.description, offerId: o.id, link: o.url }, ...st.apps] }));
+          this.toast('Offre ajoutée à vos candidatures');
+        },
+      },
       setTrack: (k) => {
         this.setState({ track: k });
         this.toast(k === 'study' ? 'Mode Études : lettres, entretiens et conseils pour candidater à une formation' : 'Mode Emploi : candidatures à des postes');
@@ -2749,6 +2788,7 @@ export default class App extends React.Component {
       doExport: () => this.exportNow(),
       isInterview: s.screen === 'interview',
       isApps: s.screen === 'apps',
+      isJobs: s.screen === 'jobs',
       isSettings: s.screen === 'settings',
       sumTics,
       letTics,

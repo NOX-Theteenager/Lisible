@@ -16,6 +16,7 @@ export const settingsOf = (s) => ({
   market: s.market,
   profile: s.profile,
   brief: s.brief,
+  savedSearches: s.savedSearches,
   work: {
     ad: { offer: s.ad.offer, analysis: s.ad.analysis, acc: s.ad.acc, sk: s.ad.sk, result: s.ad.phase === 'result' },
     letter: {

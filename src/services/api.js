@@ -120,6 +120,7 @@
     letterStream: (body, onEvent) => stream('/api/letter/stream', withCtx(body), onEvent),
     fetchOffer: (url) => post('/api/offer/fetch', { url }),
     liveSession: (body) => post('/api/live/session', withCtx(body)),
+    jobs: (body) => post('/api/jobs/search', body),
     pdf,
   };
 })();

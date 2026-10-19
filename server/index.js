@@ -10,6 +10,7 @@ import { fetchOfferPage } from './fetch-offer.js';
 import { securityHeaders } from './security.js';
 import { reqCtx } from './context.js';
 import { createLiveSession, liveEnabled } from './live.js';
+import { searchJobs, jobsEnabled } from './jobs.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -51,7 +52,7 @@ app.get('/api/config', (_req, res) => {
   res.json({
     supabaseUrl: SUPABASE_URL,
     supabaseAnonKey: SUPABASE_ANON_KEY,
-    ai: { gemini: !!process.env.GEMINI_API_KEY, claude: !!process.env.ANTHROPIC_API_KEY, live: liveEnabled() },
+    ai: { gemini: !!process.env.GEMINI_API_KEY, claude: !!process.env.ANTHROPIC_API_KEY, live: liveEnabled(), jobs: jobsEnabled() },
   });
 });
 
@@ -77,6 +78,11 @@ app.post('/api/letter/stream', identify, limiter, (req, res) => streamLetter(req
 const liveLimiter = rateLimit({ windowMs: 60_000, limit: 5, keyGenerator: req => (req.user ? 'u:' + req.user.id : 'ip:' + ipKeyGenerator(req.ip)), standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Trop de simulations lancées. Réessayez dans une minute.' } });
 app.post('/api/live/session', identify, liveLimiter, async (req, res) => {
   try { res.set('Cache-Control', 'no-store').json(await createLiveSession(req.body || {})); } catch (e) { fail(res, e); }
+});
+
+/* Offres d'emploi France Travail (sans IA). */
+app.post('/api/jobs/search', identify, limiter, async (req, res) => {
+  try { res.set('Cache-Control', 'no-store').json(await searchJobs(req.body || {})); } catch (e) { fail(res, e); }
 });
 
 app.post('/api/pdf', identify, limiter, async (req, res) => {

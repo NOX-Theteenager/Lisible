@@ -8,6 +8,7 @@ import Adapt from './screens/Adapt.jsx';
 import Letter from './screens/Letter.jsx';
 import Interview from './screens/Interview.jsx';
 import Applications from './screens/Applications.jsx';
+import Jobs from './screens/Jobs.jsx';
 import Settings from './screens/Settings.jsx';
 import Versions from './screens/Versions.jsx';
 import TemplateGallery from './overlays/TemplateGallery.jsx';
@@ -28,6 +29,11 @@ export default function AppView({ v }) {
         <main style={{ flex: '1', minWidth: '0', display: 'flex', flexDirection: 'column', paddingBottom: v.lay?.mainPb }}>
           {' '}
           <Header v={v} /> <Home v={v} /> <Editor v={v} /> <Import v={v} /> <Adapt v={v} /> <Letter v={v} /> <Interview v={v} />{' '}
+          {v.isJobs ? (
+            <div data-screen-label="Offres" style={{ padding: '22px clamp(12px,3.5vw,24px) 48px', maxWidth: '1100px', width: '100%' }}>
+              <Jobs v={v} />
+            </div>
+          ) : null}
           <Applications v={v} /> <Settings v={v} /> <Versions v={v} />
         </main>
       </div>
