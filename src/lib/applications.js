@@ -11,3 +11,11 @@ export const dueOf = (a) => {
   const days = Math.floor((Date.now() - d.getTime()) / 86400000);
   return days >= 7 ? days : 0;
 };
+
+/* Mode Études : jours restants avant la date limite d'une candidature (null si aucune date). */
+export const daysLeft = (d) => {
+  if (!d) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(d + 'T00:00:00').getTime() - today.getTime()) / 86400000);
+};

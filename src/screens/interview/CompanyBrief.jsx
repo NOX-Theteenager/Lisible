@@ -19,35 +19,56 @@ export default function CompanyBrief({ v }) {
   const b = v.brief || {};
   const d = b.data;
   const [open, setOpen] = useState(true);
+  const school = v.study || (d && d.kind === 'school');
   return (
     <Card style={{ padding: '18px 20px', gap: '12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: '1 1 280px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><AIBadge /><H size={16}>Fiche entreprise{d && d.name ? ' : ' + d.name : b.company ? ' : ' + b.company : ''}</H></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><AIBadge /><H size={16}>{school ? 'Fiche établissement' : 'Fiche entreprise'}{d && d.name ? ' : ' + d.name : b.company ? ' : ' + b.company : ''}</H></div>
           <Muted>
             {d
-              ? 'Recherche web du ' + new Date(d.date).toLocaleDateString('fr-FR') + '. Le recruteur simulé et la préparation s’en servent. Vérifiez les informations avant l’entretien.'
-              : 'Activité, actualité et valeurs de la structure, trouvées sur le web et sourcées. Seuls le nom de l’entreprise, le poste et l’offre sont utilisés pour la recherche.'}
+              ? school
+                ? 'Recherche web du ' + new Date(d.date).toLocaleDateString('fr-FR') + '. La lettre, le jury simulé et la préparation s’en servent. Vérifiez dates et frais sur le site officiel avant de candidater.'
+                : 'Recherche web du ' + new Date(d.date).toLocaleDateString('fr-FR') + '. Le recruteur simulé et la préparation s’en servent. Vérifiez les informations avant l’entretien.'
+              : school
+                ? 'Programme, admission, calendrier, frais et débouchés de la formation, trouvés sur le web et sourcés. Seuls le nom de l’établissement, la formation et sa présentation sont utilisés pour la recherche.'
+                : 'Activité, actualité et valeurs de la structure, trouvées sur le web et sourcées. Seuls le nom de l’entreprise, le poste et l’offre sont utilisés pour la recherche.'}
           </Muted>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {d ? <Btn onClick={() => setOpen(!open)}>{open ? 'Replier' : 'Afficher'}</Btn> : null}
           <Btn kind={d ? 'line' : 'ai'} onClick={b.gen} disabled={b.busy || !b.company}>
-            {b.busy ? 'Recherche en cours…' : d ? 'Mettre à jour' : 'Se renseigner sur l’entreprise'}
+            {b.busy ? 'Recherche en cours…' : d ? 'Mettre à jour' : school ? 'Se renseigner sur l’établissement' : 'Se renseigner sur l’entreprise'}
           </Btn>
         </div>
       </div>
-      {!b.company ? <Muted>Renseignez l’entreprise dans l’onglet « Adapter » ou « Lettre » pour lancer la recherche.</Muted> : null}
+      {!b.company ? <Muted>{school ? 'Renseignez l’établissement et la formation dans l’onglet « Lettre » pour lancer la recherche.' : 'Renseignez l’entreprise dans l’onglet « Adapter » ou « Lettre » pour lancer la recherche.'}</Muted> : null}
       {d && open ? (
         d.found ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <p style={{ margin: 0, fontSize: '13.5px', lineHeight: 1.6 }}>{d.summary}{d.sector ? <span style={{ color: 'var(--mu)' }}> · {d.sector}</span> : null}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: '14px' }}>
-              <List title="Activités" items={d.activities} />
-              <List title="Valeurs et engagements" items={d.values} />
-              <List title="Actualité" items={d.recent} />
-              <List title="Liens à faire en entretien" items={d.interviewAngles} />
-              <List title="Questions à poser au recruteur" items={d.questionsToAsk} />
+              {d.kind === 'school' ? (
+                <>
+                  <List title="Programme" items={d.activities} />
+                  <List title="Admission" items={d.admission} />
+                  <List title="Calendrier et procédure" items={d.deadlines} />
+                  <List title="Frais de scolarité" items={d.fees ? [d.fees] : []} />
+                  <List title="Débouchés" items={d.outcomes} />
+                  <List title="Spécificités" items={d.values} />
+                  <List title="Actualité" items={d.recent} />
+                  <List title="Liens à faire dans la lettre et l’entretien" items={d.interviewAngles} />
+                  <List title="Questions à poser au jury" items={d.questionsToAsk} />
+                </>
+              ) : (
+                <>
+                  <List title="Activités" items={d.activities} />
+                  <List title="Valeurs et engagements" items={d.values} />
+                  <List title="Actualité" items={d.recent} />
+                  <List title="Liens à faire en entretien" items={d.interviewAngles} />
+                  <List title="Questions à poser au recruteur" items={d.questionsToAsk} />
+                </>
+              )}
             </div>
             {d.sources && d.sources.length ? (
               <div style={{ fontSize: '12px', color: 'var(--mu)', display: 'flex', flexWrap: 'wrap', gap: '6px 10px' }}>
@@ -59,7 +80,7 @@ export default function CompanyBrief({ v }) {
             ) : null}
           </div>
         ) : (
-          <Muted>Peu d’informations publiques fiables ont été trouvées sur cette structure. L’entretien s’appuiera sur l’offre et votre profil.</Muted>
+          <Muted>{school ? 'Peu d’informations publiques fiables ont été trouvées sur cette formation. Ajoutez sa présentation dans l’onglet « Lettre » : la lettre et l’entretien s’appuieront dessus.' : 'Peu d’informations publiques fiables ont été trouvées sur cette structure. L’entretien s’appuiera sur l’offre et votre profil.'}</Muted>
         )
       ) : null}
     </Card>

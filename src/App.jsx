@@ -2,7 +2,7 @@
 import React from 'react';
 import AppView from './AppView.jsx';
 import { marketOf } from './lib/markets.js';
-import { dueOf } from './lib/applications.js';
+import { daysLeft, dueOf } from './lib/applications.js';
 import { DATE_RE, analyze, applyAdapt, hasNum, isWeak, matchKw } from './lib/ats.js';
 import { APP_COLS, HINTS, IMPORT_STEPS, LEVELS_EN, LEVELS_FR, LIB, TIPS, UI_EN, UI_FR, VERBS } from './lib/content.js';
 import {
@@ -155,6 +155,7 @@ export default class App extends React.Component {
       market: (saved && saved.market) || 'fr',
       track: (saved && saved.track) || 'job',
       savedSearches: (saved && saved.savedSearches) || [],
+      schoolApps: (saved && saved.schoolApps) || [],
       profile: (saved && saved.profile) || { motivation: '', achievements: '', constraints: '', values: '', use: true },
       brief: (saved && saved.brief) || null,
       briefBusy: false,
@@ -323,6 +324,7 @@ export default class App extends React.Component {
       'market',
       'track',
       'savedSearches',
+      'schoolApps',
       'profile',
       'brief',
     ];
@@ -351,7 +353,7 @@ export default class App extends React.Component {
   applySettings(set) {
     const W = set.work || {},
       o = {};
-    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'track', 'savedSearches', 'profile', 'brief'].forEach((k) => {
+    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'track', 'savedSearches', 'schoolApps', 'profile', 'brief'].forEach((k) => {
       if (set[k] != null) o[k] = set[k];
     });
     this.setState((st) => ({
@@ -519,14 +521,14 @@ export default class App extends React.Component {
     const s = this.state, L = s.letter;
     if (!window.CVAI || s.briefBusy) return;
     if (!String(L.company || '').trim()) {
-      this.toast('Renseignez d’abord l’entreprise (onglet « Adapter » ou « Lettre »)');
+      this.toast(s.track === 'study' ? 'Renseignez d’abord l’établissement (onglet « Lettre »)' : 'Renseignez d’abord l’entreprise (onglet « Adapter » ou « Lettre »)');
       return;
     }
     this.setState({ briefBusy: true });
     window.CVAI.companyBrief({ company: L.company, role: L.role, offerText: s.ad.offer || L.offerText || '' })
       .then((d) => {
         this.setState({ briefBusy: false, brief: { key: briefKey(L.company), data: d } });
-        this.toast(d.found ? 'Fiche entreprise prête' : 'Peu d’informations publiques trouvées sur cette entreprise');
+        this.toast(d.found ? (d.kind === 'school' ? 'Fiche établissement prête' : 'Fiche entreprise prête') : 'Peu d’informations publiques trouvées');
       })
       .catch((e) => {
         this.setState({ briefBusy: false });
@@ -2000,7 +2002,7 @@ export default class App extends React.Component {
               this.toast('Offre de ' + a.company + ' chargée : lancez l’analyse');
             } else if (a.url) {
               this.go('adapt', { ad: { ...s.ad, phase: 'input', src: 'link', url: a.url, analysis: null, info: null, srcPhase: 'idle' } });
-              this.toast('Lien de l’offre chargé : cliquez sur « Analyser la page »');
+              this.toast('Lien de l’offre chargé : cliquez sur « Analyser l’offre »');
             } else {
               this.go('adapt', { ad: { ...s.ad, phase: 'input', src: 'text', offer: '', analysis: null, info: null, srcPhase: 'idle' } });
               this.toast('Collez l’offre de ' + a.company + ' pour l’analyser');
@@ -2058,6 +2060,28 @@ export default class App extends React.Component {
       },
       study: s.track === 'study',
       track: s.track,
+      schoolApps: {
+        list: s.schoolApps,
+        add: (x) => {
+          this.setState((st) => ({ schoolApps: [{ id: uid(), status: 'prepare', docs: {}, note: '', ...x }, ...st.schoolApps].slice(0, 60) }));
+          this.toast('Candidature ajoutée');
+        },
+        set: (id, o) => this.setState((st) => ({ schoolApps: st.schoolApps.map((a) => (a.id === id ? { ...a, ...o } : a)) })),
+        remove: (id) => this.setState((st) => ({ schoolApps: st.schoolApps.filter((a) => a.id !== id) })),
+        fromLetter:
+          s.letter.company && !s.schoolApps.some((a) => a.school === s.letter.company && a.program === s.letter.role)
+            ? [s.letter.role, s.letter.company].filter(Boolean).join(' · ')
+            : '',
+        addFromLetter: () => {
+          this.setState((st) => ({ schoolApps: [{ id: uid(), status: 'prepare', docs: {}, note: '', school: st.letter.company, program: st.letter.role, platform: st.market === 'fr' ? 'monmaster' : 'campus', deadline: '' }, ...st.schoolApps] }));
+          this.toast('Candidature ajoutée depuis la lettre');
+        },
+        toLetter: (a) => this.go('letter', { letter: { ...s.letter, company: a.school, role: a.program } }),
+        toInterview: (a) => {
+          this.setState((st) => ({ letter: { ...st.letter, company: a.school, role: a.program } }));
+          this.go('interview');
+        },
+      },
       jobs: {
         cv,
         market: s.market,
@@ -3484,7 +3508,10 @@ export default class App extends React.Component {
       })(),
       rem: (() => {
         const n = s.apps.filter((a) => dueOf(a)).length;
-        return { has: n > 0, label: n + ' relance' + (n > 1 ? 's' : '') + ' due' + (n > 1 ? 's' : ''), go: () => this.go('apps') };
+        // Mode Études : dossiers non envoyés dont la date limite tombe dans les 7 jours.
+        const d = s.schoolApps.filter((a) => a.status === 'prepare' && a.deadline && daysLeft(a.deadline) >= 0 && daysLeft(a.deadline) <= 7).length;
+        const parts = [n ? n + ' relance' + (n > 1 ? 's' : '') + ' due' + (n > 1 ? 's' : '') : '', d ? d + ' date' + (d > 1 ? 's' : '') + ' limite' + (d > 1 ? 's' : '') + ' proche' + (d > 1 ? 's' : '') : ''].filter(Boolean);
+        return { has: n + d > 0, label: parts.join(' · '), go: () => this.go('apps') };
       })(),
       cm: (() => {
         const it = s.comments;

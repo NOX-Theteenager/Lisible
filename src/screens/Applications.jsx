@@ -1,4 +1,5 @@
 import React from 'react';
+import SchoolApps from './apps/SchoolApps.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Applications({ v }) {
@@ -18,6 +19,7 @@ export default function Applications({ v }) {
               maxWidth: '1400px',
             }}
           >
+            {v.study ? <SchoolApps v={v} /> : null}
             {' '}
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               {' '}
