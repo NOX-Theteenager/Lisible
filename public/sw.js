@@ -1,6 +1,6 @@
 /* Service worker Lisible : application disponible hors ligne, mises à jour en arrière-plan.
    Les appels /api (IA) et Supabase passent toujours par le réseau. */
-const VERSION = 'lisible-v3';
+const VERSION = 'lisible-v4';
 const SHELL = [
   '/', '/index.html', '/review.html', '/confidentialite.html', '/conditions.html', '/mentions-legales.html', '/legal.css', '/manifest.webmanifest',
   '/support.js', '/api.js', '/extract.js', '/store.js', '/no-tics.js', '/ai-adapter.js', '/exporters.js', '/i18n.js', '/auth-adapter.js',

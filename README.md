@@ -76,7 +76,7 @@ supabase/schema.sql   tables, règles de sécurité (RLS), fonctions de partage
 - Pour la mise en ligne hors Vercel, n'importe quel hébergeur Node convient (Render, Railway, Fly.io, VPS…) : définissez les mêmes variables d'environnement et ajoutez l'URL publique dans Supabase (étape 4).
 ## Données personnelles et sécurité
 
-- Pages légales : `/confidentialite`, `/conditions`, `/mentions-legales`. Les champs surlignés `[à compléter]` (identité de l'éditeur, contact, région Supabase) doivent être renseignés avant l'ouverture au public.
+- Pages légales : `/confidentialite`, `/conditions`, `/mentions-legales`. Éditeur : NGUETSA STEPHANE (Cameroun) ; données stockées à Francfort (Supabase eu-central-1).
 - `GEMINI_PAID_TIER=true` uniquement si la facturation est activée sur la clé Gemini : sur le palier gratuit, Google peut utiliser les contenus pour entraîner ses modèles. Tant que la valeur n'est pas `true`, toutes les demandes d'IA passent par Claude.
 - Aucun service tiers n'est contacté au chargement : polices et bibliothèques (React, pdf.js, mammoth, docx, JSZip, Supabase) sont servies par le site.
 - En-têtes de sécurité (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) définis dans `vercel.json` et `server/security.js`.
