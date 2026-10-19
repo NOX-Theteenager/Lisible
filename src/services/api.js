@@ -119,6 +119,7 @@
     letter: (body) => post('/api/letter', withCtx(body)),
     letterStream: (body, onEvent) => stream('/api/letter/stream', withCtx(body), onEvent),
     fetchOffer: (url) => post('/api/offer/fetch', { url }),
+    liveSession: (body) => post('/api/live/session', withCtx(body)),
     pdf,
   };
 })();

@@ -114,6 +114,8 @@
     letterStream: (payload, onDelta) => api().letterStream(payload, (ev) => { if (ev.type === 'delta') onDelta(ev.text); }).then((ev) => ev.text),
     /* Simulation d'entretien : { feedback, nextQuestion, done, summary } */
     mockInterview: (body) => api().ai('mockInterview', body),
+    /* Bilan d'un entretien vocal : { items: [{ question, answer, feedback }], summary } */
+    reviewInterview: (body) => api().ai('reviewInterview', body),
     letter: (payload) =>
       api()
         .letter(payload)
@@ -130,7 +132,9 @@
         .then((r) => r.text),
 
     /* Entretien : { questions[], pitch, linkedin:{headline, about} } */
-    interview: (cv, offer) => api().ai('interview', { cv, offer }),
+    interview: (cv, offer, extra) => api().ai('interview', { cv, offer, ...(extra || {}) }),
+    /* Fiche entreprise (recherche web) : { found, name, summary, sector, activities, values, recent, interviewAngles, questionsToAsk, sources } */
+    companyBrief: (body) => api().ai('companyBrief', body),
 
     /* Traduction du CV (même structure, cv.lang = lang). */
     async translateCv(cv, lang) {

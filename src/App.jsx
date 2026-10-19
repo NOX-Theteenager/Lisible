@@ -25,6 +25,8 @@ import { KEY, LS_ACCT, settingsOf } from './lib/storage.js';
 import { ACCENTS, FONTS, TPLS, applyFont, resolveTpl } from './lib/templates.js';
 import { NT, clone, errMsg, esc, lineDiff, rel, scoreColor, slug, toMonths, uid, wc, whenReady } from './lib/utils.js';
 
+const briefKey = (c) => String(c || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
 export default class App extends React.Component {
   state = this.init();
   init() {
@@ -149,6 +151,8 @@ export default class App extends React.Component {
       },
       market: (saved && saved.market) || 'fr',
       profile: (saved && saved.profile) || { motivation: '', achievements: '', constraints: '', values: '', use: true },
+      brief: (saved && saved.brief) || null,
+      briefBusy: false,
       exp: { open: false, fmt: 'docx', name: '' },
       toast: '',
       renaming: null,
@@ -293,6 +297,7 @@ export default class App extends React.Component {
       'iv',
       'market',
       'profile',
+      'brief',
     ];
     if (!keys.some((k) => ps[k] !== s[k])) return;
     clearTimeout(this._st);
@@ -325,7 +330,7 @@ export default class App extends React.Component {
   applySettings(set) {
     const W = set.work || {},
       o = {};
-    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'profile'].forEach((k) => {
+    ['tpl', 'accent', 'font', 'fsize', 'letFont', 'letSize', 'lang', 'prefs', 'market', 'profile', 'brief'].forEach((k) => {
       if (set[k] != null) o[k] = set[k];
     });
     this.setState((st) => ({
@@ -485,6 +490,25 @@ export default class App extends React.Component {
     }
   }
   /* Contexte envoyé avec chaque demande d'IA : marché, langue du contenu, mémoire du profil. */
+  /* Fiche entreprise : recherche web sur la structure (activité, actualité, valeurs), réutilisée par l'entretien. */
+  briefGen() {
+    const s = this.state, L = s.letter;
+    if (!window.CVAI || s.briefBusy) return;
+    if (!String(L.company || '').trim()) {
+      this.toast('Renseignez d’abord l’entreprise (onglet « Adapter » ou « Lettre »)');
+      return;
+    }
+    this.setState({ briefBusy: true });
+    window.CVAI.companyBrief({ company: L.company, role: L.role, offerText: s.ad.offer || L.offerText || '' })
+      .then((d) => {
+        this.setState({ briefBusy: false, brief: { key: briefKey(L.company), data: d } });
+        this.toast(d.found ? 'Fiche entreprise prête' : 'Peu d’informations publiques trouvées sur cette entreprise');
+      })
+      .catch((e) => {
+        this.setState({ briefBusy: false });
+        this.toast(errMsg(e));
+      });
+  }
   syncContext() {
     const s = this.state, cv = this.cur().cv;
     const ctx = { market: s.market, lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr', profile: s.profile };
@@ -972,6 +996,7 @@ export default class App extends React.Component {
   }
   renderVals() {
     const MK = marketOf(this.state.market);
+    const briefOk = !!(this.state.brief && this.state.brief.data && this.state.brief.key === briefKey(this.state.letter.company));
     const s = this.state,
       v = this.cur(),
       cv = v.cv,
@@ -1956,8 +1981,18 @@ export default class App extends React.Component {
           else { this.printHtml(html); this.toast('Service PDF indisponible : utilisez « Enregistrer au format PDF »'); }
         });
       },
+      brief: {
+        company: s.letter.company,
+        data: briefOk ? s.brief.data : null,
+        busy: s.briefBusy,
+        gen: () => this.briefGen(),
+      },
       mock: {
         cv,
+        analysis: s.ad.analysis || null,
+        brief: briefOk ? s.brief.data : null,
+        profile: s.profile,
+        lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr',
         offer: { company: s.letter.company, role: s.letter.role, text: s.ad.offer || s.letter.offerText || '' },
         target: s.letter.company || s.letter.role ? 'Pour ' + [s.letter.role, s.letter.company].filter(Boolean).join(' chez ') : 'À partir de votre CV (analysez une offre pour un entretien ciblé)',
       },
@@ -2702,7 +2737,7 @@ export default class App extends React.Component {
         }
         const prev = IV;
         this.setState((st) => ({ iv: { ...st.iv, phase: 'busy' } }));
-        window.CVAI.interview(cv, { company: L.company, role: L.role, text: s.ad.offer || L.offerText || '' })
+        window.CVAI.interview(cv, { company: L.company, role: L.role, text: s.ad.offer || L.offerText || '' }, { analysis: s.ad.analysis || null, brief: briefOk ? s.brief.data : null })
           .then((r) => {
             const qs = r.questions || [];
             this.setState({

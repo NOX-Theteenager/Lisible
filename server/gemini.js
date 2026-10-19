@@ -113,3 +113,15 @@ export function contextPrompt({ market, lang, profile } = {}) {
   if (p.use !== false && lines.length) out.push("Informations personnelles données par la personne elle-même (faits utilisables tels quels, à ne pas extrapoler) :\n" + lines.join('\n'));
   return out.join('\n\n');
 }
+
+/* Résumé de l'analyse de l'offre (écran « Adapter ») pour l'entretien : exigences remplies ou non,
+   compétences manquantes, mots-clés. Le recruteur peut ainsi creuser les écarts. */
+export function offerInsights(an) {
+  if (!an || typeof an !== 'object') return '';
+  const t = (v, n) => String(v || '').slice(0, n);
+  const req = (Array.isArray(an.requirements) ? an.requirements : []).slice(0, 12).map(r => `- ${r.met ? '✓' : '✗'} ${t(r.label, 200)}${r.detail ? ' (' + t(r.detail, 200) + ')' : ''}`);
+  const miss = (Array.isArray(an.missingSkills) ? an.missingSkills : []).slice(0, 10).map(x => t(x, 80));
+  const kw = (Array.isArray(an.keywords) ? an.keywords : []).slice().sort((a, b) => (b.w || 0) - (a.w || 0)).slice(0, 12).map(k => t(k.k, 60));
+  if (!req.length && !miss.length && !kw.length) return '';
+  return `Analyse de l'adéquation CV / offre :${req.length ? '\nExigences du poste (✓ couverte par le CV, ✗ non démontrée) :\n' + req.join('\n') : ''}${miss.length ? '\nCompétences demandées absentes du CV : ' + miss.join(', ') : ''}${kw.length ? '\nMots-clés importants : ' + kw.join(', ') : ''}`;
+}

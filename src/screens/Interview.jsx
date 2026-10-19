@@ -1,6 +1,7 @@
 import React from 'react';
 import { ps } from '../lib/pseudo.js';
 import MockInterview from './interview/MockInterview.jsx';
+import CompanyBrief from './interview/CompanyBrief.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Interview({ v }) {
@@ -78,6 +79,7 @@ export default function Interview({ v }) {
                 {v.iv?.btn}
               </button>{' '}
             </div>{' '}
+            <CompanyBrief v={v} />
             {v.iv?.idle ? (
               <>
                 <div
