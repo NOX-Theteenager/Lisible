@@ -13,6 +13,21 @@ export default function MockInterview({ v }) {
   useEffect(() => { window.LisibleAPI.config().then(c => setLive(!!(c.ai && c.ai.live) && liveSupported())).catch(() => {}); }, []);
   const voice = live && mode === 'voice';
   const [locked, setLocked] = useState(false);
+  const [total, setTotal] = useState(5);
+  const [lang, setLang] = useState(m.lang === 'en' ? 'en' : 'fr');
+  const [tone, setTone] = useState('kind');
+  const [vox, setVox] = useState('f');
+  const opts = { total, lang, tone, voice: vox };
+  const H_ = v.ivHist || {};
+  // Chaque séance terminée rejoint l'historique (appareil, et compte si connecté).
+  const save = (r) => H_.add && H_.add({
+    id: 'iv' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    date: new Date().toISOString(),
+    company: (m.offer && m.offer.company) || '',
+    role: (m.offer && m.offer.role) || '',
+    lang, tone, total, ...r,
+  });
+  const label = { fontSize: '12px', fontWeight: 600, color: 'var(--mu)' };
   return (
     <Card style={{ padding: '20px', gap: '14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -28,13 +43,21 @@ export default function MockInterview({ v }) {
           <span key={l} style={{ padding: '2px 8px', borderRadius: '999px', background: on ? 'var(--oks)' : 'var(--sub)', color: on ? 'var(--ok)' : 'var(--fa)' }}>{on ? '✓' : '–'} {l}</span>
         ))}
       </div>
-      {voice ? <VoiceInterview m={m} onLock={setLocked} /> : <TextInterview m={m} onLock={setLocked} />}
+      {!locked ? (
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Questions</span><Seg value={String(total)} options={[['3', '3'], ['5', '5'], ['8', '8']]} onChange={k => setTotal(Number(k))} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Langue de l’entretien</span><Seg value={lang} options={[['fr', 'Français'], ['en', 'English']]} onChange={setLang} /></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Recruteur</span><Seg value={tone} options={[['kind', 'Bienveillant'], ['tough', 'Exigeant'], ['panel', 'Panel (RH + manager)']]} onChange={setTone} /></div>
+          {voice ? <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}><span style={label}>Voix</span><Seg value={vox} options={[['f', 'Féminine'], ['m', 'Masculine']]} onChange={setVox} /></div> : null}
+        </div>
+      ) : null}
+      {voice ? <VoiceInterview m={m} opts={opts} onLock={setLocked} onSave={save} /> : <TextInterview m={m} opts={opts} onLock={setLocked} onSave={save} />}
     </Card>
   );
 }
 
-function TextInterview({ m, onLock }) {
-  const [total, setTotal] = useState(5);
+function TextInterview({ m, opts, onLock, onSave }) {
+  const { total, lang, tone } = opts;
   const [turns, setTurns] = useState([]); // { q, a, feedback }
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -47,11 +70,14 @@ function TextInterview({ m, onLock }) {
   async function call(history) {
     setBusy(true); setError('');
     try {
-      const r = await window.CVAI.mockInterview({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, history: history.map(t => ({ q: t.q, a: t.a })), total });
+      const r = await window.CVAI.mockInterview({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, history: history.map(t => ({ q: t.q, a: t.a })), total, lang, tone });
       const next = history.slice();
       if (next.length) next[next.length - 1] = { ...next[next.length - 1], feedback: r.feedback };
       setTurns(next);
-      if (r.done) { setQuestion(''); setSummary(r.summary); } else setQuestion(r.nextQuestion);
+      if (r.done) {
+        setQuestion(''); setSummary(r.summary);
+        onSave({ mode: 'text', summary: r.summary, items: next.map(t => ({ question: t.q, answer: t.a, feedback: t.feedback })) });
+      } else setQuestion(r.nextQuestion);
     } catch (e) { setError(e.message || 'La simulation a échoué. Réessayez.'); }
     setBusy(false);
   }
@@ -64,7 +90,6 @@ function TextInterview({ m, onLock }) {
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          {!started ? <Seg value={String(total)} options={[['3', '3 questions'], ['5', '5'], ['8', '8']]} onChange={k => setTotal(Number(k))} /> : null}
           <Btn kind={started ? 'line' : 'ai'} onClick={start} disabled={busy}>{started ? 'Recommencer' : 'Commencer la simulation'}</Btn>
         </div>
       </div>

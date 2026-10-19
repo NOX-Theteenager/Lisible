@@ -3,7 +3,7 @@
    la clé d'API ne quitte jamais le serveur, et le jeton est verrouillé sur le modèle, la consigne
    (CV + offre) et la configuration audio. Il expire vite et ne sert qu'à une seule simulation. */
 import { GoogleGenAI, Modality } from '@google/genai';
-import { cvForPrompt, contextPrompt, bad, offerInsights } from './gemini.js';
+import { cvForPrompt, contextPrompt, bad, offerInsights, toneOf } from './gemini.js';
 import { briefPrompt } from './research.js';
 
 export const LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live';
@@ -16,13 +16,17 @@ export const liveEnabled = () =>
 let client = null;
 const txt = (v, max) => String(v || '').slice(0, max);
 
-function instruction({ cv, offer, total, market, lang, profile, analysis, brief }) {
+/* Voix proposées (voix préenregistrées de Gemini Live). */
+const VOICES = { f: 'Aoede', m: 'Charon' };
+
+function instruction({ cv, offer, total, market, lang, profile, analysis, brief, tone }) {
   const o = offer || {}, en = lang === 'en';
   return `Tu es recruteur·se pour ${txt(o.company, 200) || "l'entreprise"} et tu mènes un entretien d'embauche À L'ORAL, en ${en ? 'anglais' : 'français'}, pour le poste : ${txt(o.role, 200) || 'décrit ci-dessous'}.
 ${contextPrompt({ market, lang, profile })}
 ${[offerInsights(analysis), briefPrompt(brief)].filter(Boolean).join('\n\n')}
+${toneOf(tone)}
 Déroulé :
-- Présente-toi en une phrase (prénom fictif, fonction), puis pose la question 1.
+- Présente-toi en une phrase (prénom fictif, fonction ; en panel, les deux personnes se présentent), puis pose la question 1.
 - Exactement ${total} questions au total, une à la fois, variées (motivation, métier ou technique, comportement, mise en situation), adaptées au CV et à l'offre. Rebondis sur les réponses quand c'est pertinent. Creuse au moins une exigence non démontrée par le CV ; cite l'actualité ou les activités de l'entreprise si elles sont connues, sans rien inventer. Tu peux t'appuyer sur ce que la personne a dit de ses motivations et contraintes.
 - Parle comme à l'oral : phrases courtes, naturelles, une ou deux phrases par question. Pas de listes, pas de lecture de texte.
 - Laisse la personne finir. Si une réponse est très vague, tu peux faire une seule relance courte ; elle ne compte pas comme une question.
@@ -41,6 +45,7 @@ ${cvForPrompt(cv)}`;
 export function liveConfig(body) {
   return {
     responseModalities: [Modality.AUDIO],
+    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICES[body.voice] || VOICES.f } } },
     systemInstruction: instruction(body),
     inputAudioTranscription: {},
     outputAudioTranscription: {},

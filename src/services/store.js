@@ -1,6 +1,6 @@
 /* ───────────────────────────────────────────────────────────────
    SYNCHRONISATION SUPABASE — window.CVStore
-   Versions de CV, candidatures, préférences, liens de relecture et
+   Versions de CV, candidatures, historique des entretiens, préférences, liens de relecture et
    commentaires. N'envoie que les lignes modifiées depuis la dernière
    synchronisation.
    ─────────────────────────────────────────────────────────────── */
@@ -10,7 +10,10 @@
     if (!c) throw new Error('Supabase non configuré');
     return c;
   };
-  const seen = { v: new Map(), a: new Map(), s: '' };
+  const seen = { v: new Map(), a: new Map(), i: new Map(), s: '' };
+  /* Table absente (migration 003 non appliquée) : l'historique reste sur l'appareil. */
+  let noIv = false;
+  const missingTable = (e) => e && (e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message || ''));
   let chain = Promise.resolve();
   const chk = ({ error }) => {
     if (error) throw new Error(error.message);
@@ -19,17 +22,21 @@
   function reset() {
     seen.v.clear();
     seen.a.clear();
+    seen.i.clear();
     seen.s = '';
   }
 
-  /* Charge tout le compte. Retour : { versions, apps, settings } (listes vides pour un nouveau compte). */
+  /* Charge tout le compte. Retour : { versions, apps, interviews, settings } (listes vides pour un nouveau compte). */
   async function pull(userId) {
     const c = await sb();
-    const [v, a, p] = await Promise.all([
+    const [v, a, p, iv] = await Promise.all([
       c.from('cv_versions').select('id,name,tag,cv,history,updated_at').eq('user_id', userId).order('updated_at', { ascending: false }),
       c.from('applications').select('id,data').eq('user_id', userId).order('updated_at', { ascending: false }),
       c.from('profiles').select('settings').eq('id', userId).maybeSingle(),
+      c.from('interview_sessions').select('id,data').eq('user_id', userId).order('created_at', { ascending: false }).limit(100),
     ]);
+    noIv = missingTable(iv.error);
+    if (!noIv) chk(iv);
     [v, a, p].forEach(chk);
     reset();
     const versions = v.data.map((r) => ({
@@ -43,13 +50,15 @@
     versions.forEach((x) => seen.v.set(x.id, JSON.stringify(x)));
     const apps = a.data.map((r) => r.data);
     apps.forEach((x) => seen.a.set(x.id, JSON.stringify(x)));
+    const interviews = noIv ? null : iv.data.map((r) => r.data);
+    (interviews || []).forEach((x) => seen.i.set(x.id, JSON.stringify(x)));
     const settings = (p.data && p.data.settings) || {};
     seen.s = JSON.stringify(settings);
-    return { versions, apps, settings };
+    return { versions, apps, interviews, settings };
   }
 
   /* Envoie les différences. Les appels sont mis en file pour rester ordonnés. */
-  function push(userId, { versions, apps, settings }) {
+  function push(userId, { versions, apps, interviews, settings }) {
     chain = chain.then(async () => {
       const c = await sb();
       const vUp = [],
@@ -68,6 +77,14 @@
         if (seen.a.get(x.id) !== j) aUp.push([x, j]);
       });
       const aDel = [...seen.a.keys()].filter((id) => !aIds.has(id));
+      const iUp = [],
+        iIds = new Set();
+      (interviews || []).forEach((x) => {
+        iIds.add(x.id);
+        const j = JSON.stringify(x);
+        if (seen.i.get(x.id) !== j) iUp.push([x, j]);
+      });
+      const iDel = interviews ? [...seen.i.keys()].filter((id) => !iIds.has(id)) : [];
       const sJ = JSON.stringify(settings);
       if (vUp.length) {
         chk(
@@ -102,6 +119,21 @@
       if (aDel.length) {
         chk(await c.from('applications').delete().eq('user_id', userId).in('id', aDel));
         aDel.forEach((id) => seen.a.delete(id));
+      }
+      if (!noIv && (iUp.length || iDel.length)) {
+        try {
+          if (iUp.length) {
+            chk(await c.from('interview_sessions').upsert(iUp.map(([x]) => ({ user_id: userId, id: x.id, data: x, created_at: x.date }))));
+            iUp.forEach(([x, j]) => seen.i.set(x.id, j));
+          }
+          if (iDel.length) {
+            chk(await c.from('interview_sessions').delete().eq('user_id', userId).in('id', iDel));
+            iDel.forEach((id) => seen.i.delete(id));
+          }
+        } catch (e) {
+          if (!/does not exist|schema cache/i.test(e.message)) throw e;
+          noIv = true;
+        }
       }
       if (sJ !== seen.s) {
         chk(await c.from('profiles').upsert({ id: userId, settings, updated_at: new Date().toISOString() }));
@@ -170,6 +202,10 @@
     chk(await c.from('share_links').delete().eq('user_id', userId));
     chk(await c.from('cv_versions').delete().eq('user_id', userId));
     chk(await c.from('applications').delete().eq('user_id', userId));
+    if (!noIv) {
+      const r = await c.from('interview_sessions').delete().eq('user_id', userId);
+      if (!missingTable(r.error)) chk(r);
+    }
     chk(await c.from('profiles').update({ settings: {} }).eq('id', userId));
     reset();
   }

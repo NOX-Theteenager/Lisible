@@ -5,7 +5,8 @@
      npm run eval -- --provider=gemini     → Gemini uniquement, sans repli (les cas sont fictifs : aucune donnée réelle n'est envoyée)
      npm run eval -- --only=cm-comptable-douala,fr-comptable --tasks=parse,letter
      npm run eval -- --save-baseline       → enregistre ce passage comme référence
-   Chaque passage coûte des appels d'API (4 par cas). */
+   Chaque passage coûte des appels d'API (6 par cas). Tâches : parse, analyze, bullet, letter, interview
+   (première question + bilan d'un entretien avec une bonne et une mauvaise réponse), oral (sans IA). */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,13 +15,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const a = process.argv.find(x => x.startsWith('--' + k + '=')); return a ? a.split('=')[1] : process.argv.includes('--' + k) ? true : d; };
 const provider = arg('provider', 'auto');
 if (provider === 'claude' || provider === 'gemini') process.env.AI_PROVIDER = provider;
-const TASKS_ON = String(arg('tasks', 'parse,analyze,bullet,letter')).split(',');
+const TASKS_ON = String(arg('tasks', 'parse,analyze,bullet,letter,interview,oral')).split(',');
 const only = arg('only', '') ? String(arg('only')).split(',') : null;
 
 const { TASKS } = await import('../server/tasks.js');
 const { writeLetter } = await import('../server/claude.js');
 const { cvText } = await import('../src/lib/cv.js');
 const { missing } = await import('../src/lib/facts.js');
+const { oralStats, countFillers } = await import('../src/lib/oral.js');
 globalThis.window = globalThis;
 await import('../src/services/no-tics.js');
 const NT = globalThis.NoTics;
@@ -102,6 +104,47 @@ async function runCase(c) {
       add('letter', 'au plus 3 repères à compléter', br <= 3, br + ' repère(s)');
     } catch (e) { add('letter', 'appel réussi', false, e.message); }
   }
+  if (cv && TASKS_ON.includes('interview')) {
+    const en = c.lang === 'en', offer = { company: c.company, role: c.role, text: c.offer };
+    try {
+      const r = await TASKS.mockInterview({ cv, offer, history: [], total: 3, ...ctx });
+      const q = String(r.nextQuestion || '');
+      add('interview', '1re question posée', q.trim().length > 10 && !r.done, q);
+      add('interview', en ? 'question en anglais' : 'question en français', en ? /\b(you|your|tell|what|how|why)\b/i.test(q) : /\b(vous|votre|pourquoi|comment|quel|quelle)\b/i.test(q), q.slice(0, 80));
+    } catch (e) { add('interview', 'question : appel réussi', false, e.message); }
+    // Bilan d'un entretien oral : une réponse STAR solide (faits du CV) et une réponse creuse.
+    const weak = en ? "Well, I am a hard worker and a team player, I always do my best." : "Euh, je suis quelqu'un de motivé, je travaille bien en équipe, voilà.";
+    const transcript = [
+      { role: 'recruiter', text: en ? 'Tell me about an achievement you are proud of.' : 'Parlez-moi d’une réalisation dont vous êtes fier ou fière.' },
+      { role: 'candidate', text: c.strongAnswer },
+      { role: 'recruiter', text: en ? 'Why should we hire you for this role?' : 'Pourquoi devrions-nous vous recruter pour ce poste ?' },
+      { role: 'candidate', text: weak },
+    ];
+    try {
+      const r = await TASKS.reviewInterview({ cv, offer, transcript, ...ctx });
+      const it = r.items || [];
+      add('interview', '2 questions évaluées', it.length === 2, it.length + ' élément(s)');
+      if (it.length >= 2) {
+        const [a, b] = it;
+        add('interview', 'bonne réponse mieux notée (+3)', a.feedback.score >= b.feedback.score + 3, a.feedback.score + ' vs ' + b.feedback.score);
+        add('interview', 'résultat repéré (STAR)', a.feedback.star.r && !b.feedback.star.r, JSON.stringify(a.feedback.star) + ' / ' + JSON.stringify(b.feedback.star));
+        const inv = missing(it.map(x => x.feedback.betterAnswer).join('\n'), src + '\n' + c.strongAnswer);
+        add('interview', 'réponses améliorées sans chiffre inventé', !inv.length, inv.join(' · '));
+      }
+      add('interview', 'bilan noté sur 10', r.summary && r.summary.score >= 0 && r.summary.score <= 10, r.summary && r.summary.score);
+    } catch (e) { add('interview', 'bilan : appel réussi', false, e.message); }
+  }
+
+  if (TASKS_ON.includes('oral')) {
+    // Analyse de l'oral, sans IA : mêmes entrées que l'appli (transcription + temps de parole).
+    const en = c.lang === 'en';
+    const said = en ? 'Um, so, you know, I basically built the service. Uh, it handles a lot of traffic.' : "Euh, du coup j'ai repris le projet. En fait, euh, on a tenu les délais, voilà.";
+    const f = countFillers(said, c.lang);
+    const n = Object.values(f).reduce((x, y) => x + y, 0);
+    add('oral', 'mots de remplissage comptés', n === (en ? 4 : 5), JSON.stringify(f));
+    const o = oralStats([{ role: 'candidate', text: c.strongAnswer }], [{ speechMs: 18000, durMs: 20000 }], c.lang);
+    add('oral', 'débit calculé (20 s de parole)', o && o.words > 20 && o.wpm === Math.round(o.words * 3), o && o.wpm + ' mots/min');
+  }
   return { id: c.id, ms: Date.now() - t0, checks, score: checks.length ? Math.round((checks.filter(x => x.ok).length / checks.length) * 100) : 0 };
 }
 
@@ -134,13 +177,20 @@ if (fs.existsSync(basePath) && !arg('save-baseline')) {
   if (reg.length) process.exitCode = 1;
 }
 if (arg('save-baseline')) {
-  // Avec --only, seuls les cas relancés remplacent ceux de la référence existante.
+  // Avec --only ou --tasks, seuls les cas et les tâches relancés remplacent ceux de la référence existante.
   let out = report;
-  if (only && fs.existsSync(basePath)) {
+  if ((only || arg('tasks')) && fs.existsSync(basePath)) {
     const base = JSON.parse(fs.readFileSync(basePath, 'utf8'));
-    const merged = [...base.results.filter(r => !only.includes(r.id)), ...results].sort((a, b) => a.id.localeCompare(b.id));
+    const ran = new Set(TASKS_ON);
+    const mergeCase = (old, neu) => ({ ...neu, checks: [...old.checks.filter(x => !ran.has(x.task)), ...neu.checks.filter(x => ran.has(x.task))] });
+    const merged = [
+      ...base.results.filter(r => !results.some(n => n.id === r.id)),
+      ...results.map(n => { const o = base.results.find(r => r.id === n.id); return o ? mergeCase(o, n) : n; }),
+    ].sort((a, b) => a.id.localeCompare(b.id));
     const ch = merged.flatMap(r => r.checks);
-    out = { ...base, date: report.date, results: merged, total: Math.round((ch.filter(x => x.ok).length / ch.length) * 100) };
+    const bt = {};
+    for (const x of ch) { bt[x.task] = bt[x.task] || [0, 0]; bt[x.task][1]++; if (x.ok) bt[x.task][0]++; }
+    out = { ...base, date: report.date, results: merged, byTask: bt, total: Math.round((ch.filter(x => x.ok).length / ch.length) * 100) };
   }
   fs.writeFileSync(basePath, JSON.stringify(out, null, 2));
   console.log('Référence enregistrée : evals/baseline.json (' + out.total + ' %)');

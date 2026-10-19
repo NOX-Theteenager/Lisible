@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { cvForPrompt, bad, contextPrompt } from './gemini.js';
+import { briefPrompt } from './research.js';
 
 let client = null;
 const MODEL = () => process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
@@ -67,7 +68,7 @@ Ce qui rend une lettre humaine et personnelle :
 - Elle est courte : 220 à 330 mots pour le corps.
 
 Interdits absolus :
-- Inventer un fait, un chiffre, un outil, une motivation ou un lien avec l'entreprise qui n'est ni dans le CV ni dans l'offre. Si un élément personnel manque (par exemple pourquoi cette entreprise en particulier), écris un repère entre crochets que la personne complétera, comme [ce qui vous attire dans leur produit].
+- Inventer un fait, un chiffre, un outil, une motivation ou un lien avec l'entreprise qui n'est ni dans le CV, ni dans l'offre, ni dans la fiche entreprise fournie. Si un élément personnel manque (par exemple pourquoi cette entreprise en particulier), écris un repère entre crochets que la personne complétera, comme [ce qui vous attire dans leur produit].
 - Clichés : « je me permets », « c'est avec un grand intérêt », « passionné·e », « dynamique », « motivé·e », « rigoureux·se », « force de proposition », « esprit d'équipe », « valeur ajoutée », « relever de nouveaux défis », « leader dans son domaine », « dans l'attente de votre réponse ».
 - Tirets cadratins, questions rhétoriques, énumérations systématiques par trois, phrases toutes construites pareil, plus de trois phrases commençant par « Je ».
 
@@ -80,7 +81,7 @@ export const ANGLES = {
   parcours: 'Construis la lettre autour de la cohérence du parcours : comment chaque étape mène logiquement à ce poste, et la progression qu’il représente.',
 };
 
-function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, angle }) {
+function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, angle, brief: company }) {
   const o = offer || {};
   if (!cv || !cv.contact) throw bad('CV manquant');
   if (!String(o.company || '').trim() || !String(o.role || '').trim()) throw bad('Indiquez l’entreprise et le poste visé.');
@@ -94,6 +95,8 @@ function buildLetter({ cv, offer, tone, mode, oldLetter, lang, market, profile, 
     `Offre d'emploi :\n${String(o.text || '').slice(0, 20_000) || '(texte de l’offre non fourni : appuie-toi sur l’intitulé du poste et laisse un repère pour le lien avec l’entreprise)'}`,
     `CV de la personne (JSON) :\n${cvForPrompt(cv)}`,
   ];
+  const info = briefPrompt(company);
+  if (info) brief.push(`${info}\nPour le lien avec l'entreprise, appuie-toi sur UN élément précis de cette fiche (une activité, une actualité, un engagement) relié à l'expérience de la personne, formulé simplement et sans flatterie. N'utilise que ce qui figure dans la fiche ; si la personne a donné ses propres motivations, elles priment.`);
   if (ANGLES[angle]) brief.push('Angle de cette version : ' + ANGLES[angle]);
   if (mode === 'improve') brief.push(`Lettre actuelle de la personne, à améliorer. Garde ce qui est vrai et personnel dans sa version (anecdotes, raisons, faits), retire les formules creuses, ajoute les preuves chiffrées du CV et le lien explicite avec l'offre :\n${String(oldLetter).slice(0, 12_000)}`);
   else brief.push('Écris une nouvelle lettre.');

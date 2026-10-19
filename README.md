@@ -43,7 +43,7 @@ npm start              # http://localhost:3000 (copie aussi les bibliothèques d
 ### 2. Supabase
 
 1. Créez un projet sur https://supabase.com.
-2. **SQL Editor** → collez le contenu de `supabase/schema.sql` → *Run*, puis celui de `supabase/002_rgpd.sql` (suppression de compte et purges automatiques) → *Run*.
+2. **SQL Editor** → collez le contenu de `supabase/schema.sql` → *Run*, puis celui de `supabase/002_rgpd.sql` (suppression de compte et purges automatiques) → *Run*, puis `supabase/003_interviews.sql` (historique des simulations d'entretien) → *Run*. Sans cette dernière, l'historique reste sur l'appareil.
 3. **Project Settings → Data API** : copiez *Project URL* dans `SUPABASE_URL`. **Project Settings → API Keys** : copiez la *Publishable key* (`sb_publishable_…`) dans `SUPABASE_PUBLISHABLE_KEY` (la clé *anon public* de l’onglet *Legacy API keys* fonctionne aussi).
 4. **Authentication → URL Configuration** : *Site URL* = l'adresse de l'application (`http://localhost:3000` en local), et ajoutez la même adresse dans *Redirect URLs*.
 5. Connexion Google (facultatif) : **Authentication → Providers → Google**, renseignez l'identifiant et le secret OAuth créés dans Google Cloud Console. L'URI de redirection autorisée à déclarer chez Google est `https://<votre-projet>.supabase.co/auth/v1/callback`.
@@ -94,15 +94,16 @@ Le PDF est généré par Chromium : en local, Chrome installé est utilisé (ou 
 
 ## Évaluation de la qualité
 
-`evals/cases.json` contient 10 CV et offres fictifs (France, Cameroun francophone et anglophone, Côte d'Ivoire, Sénégal, Maroc, international). Chaque passage vérifie l'import (faits perdus ou inventés), l'analyse d'offre, les suggestions et la lettre (longueur, langue, entreprise citée, chiffres inventés, clichés, repères à compléter), puis compare à `evals/baseline.json`.
+`evals/cases.json` contient 10 CV et offres fictifs (France, Cameroun francophone et anglophone, Côte d'Ivoire, Sénégal, Maroc, international). Chaque passage vérifie l'import (faits perdus ou inventés), l'analyse d'offre, les suggestions la lettre (longueur, langue, entreprise citée, chiffres inventés, clichés, repères à compléter), la simulation d'entretien (première question dans la bonne langue ; bilan d'un entretien avec une réponse STAR solide et une réponse creuse : la solide doit être nettement mieux notée, le résultat repéré, aucun chiffre inventé) et l'analyse de l'oral (sans IA), puis compare à `evals/baseline.json`.
 
 ```bash
 npm run eval -- --provider=claude            # ou gemini, ou sans option (fournisseur actuel)
 npm run eval -- --only=cm-comptable-douala   # un ou plusieurs cas
-npm run eval -- --save-baseline              # enregistre la référence
+npm run eval -- --tasks=interview,oral       # seulement certaines tâches
+npm run eval -- --save-baseline              # enregistre la référence (fusion par cas et par tâche)
 ```
 
-Lancez-le après chaque changement de consigne ou de modèle (par exemple un nouveau `GEMINI_MODEL`) : une régression fait échouer la commande. Chaque cas coûte 4 appels d'API. Vous pouvez ajouter vos propres CV anonymisés dans `cases.json`.
+Lancez-le après chaque changement de consigne ou de modèle (par exemple un nouveau `GEMINI_MODEL`) : une régression fait échouer la commande. Chaque cas coûte 6 appels d'API (lecture du CV, analyse, suggestion, lettre, question et bilan d'entretien). Sur une connexion lente, si Node échoue à joindre les API (« Connection error »), ajoutez `--no-network-family-autoselection --dns-result-order=ipv4first`. Vous pouvez ajouter vos propres CV anonymisés dans `cases.json`.
 
 ## Notes
 

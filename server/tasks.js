@@ -1,4 +1,4 @@
-import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt, offerInsights } from './gemini.js';
+import { genJSON, S, STYLE, CV_SCHEMA, LEVELS, cvForPrompt, bad, contextPrompt, offerInsights, toneOf } from './gemini.js';
 import { companyBrief, briefPrompt } from './research.js';
 
 /* Ce que l'on sait du poste et de l'entreprise, ajouté aux consignes d'entretien. */
@@ -199,13 +199,14 @@ async function ocr({ image, pdf }) {
 }
 
 /* ─── Simulation d'entretien : le modèle joue le recruteur ───── */
-async function mockInterview({ cv, offer, history, total, market, lang, profile, analysis, brief }) {
+async function mockInterview({ cv, offer, history, total, market, lang, profile, analysis, brief, tone }) {
   const o = offer || {}, h = Array.isArray(history) ? history.slice(-12) : [], n = Math.min(Math.max(Number(total) || 5, 3), 10);
   const done = h.length >= n;
   const out = await genJSON({
     system: `Tu joues le rôle d'un·e recruteur·se exigeant·e mais bienveillant·e qui mène un entretien d'embauche pour le poste ci-dessous, puis tu coaches la personne.
 ${contextPrompt({ market, lang, profile })}
 ${jobContext(analysis, brief)}
+${toneOf(tone)} Le style ne change rien à l'évaluation : le retour STAR reste juste et constructif.
 Déroulé : ${n} questions au total, une à la fois, variées (motivation, technique ou métier, comportement, mise en situation), adaptées au CV et à l'offre ; rebondis sur les réponses précédentes quand c'est pertinent. Creuse au moins une exigence non démontrée par le CV, et appuie-toi sur l'actualité ou les activités de l'entreprise si elles sont connues (sans jamais en inventer).
 ${h.length ? `Évalue la DERNIÈRE réponse ("feedback") avec la méthode STAR : "star" indique si la Situation, la Tâche, l'Action et le Résultat sont présents ; "score" sur 10 ; "strengths" et "improve" : 1 à 3 points concrets chacun, en citant la réponse ; "betterAnswer" : une version améliorée de la réponse, à la première personne, qui n'utilise QUE les faits donnés par la personne ou présents dans le CV (repère [à compléter] pour un chiffre manquant).` : 'Aucune réponse à évaluer : "feedback" a score 0 et des listes vides.'}
 ${done ? 'Toutes les questions ont été posées : "nextQuestion" vide, "done" vrai, et "summary" donne un bilan global (score moyen, 2-3 points forts, 2-3 priorités de travail).' : `"nextQuestion" : la question n°${h.length + 1}, formulée à l'oral, en une ou deux phrases. "done" faux, "summary" avec des champs vides.`}`,

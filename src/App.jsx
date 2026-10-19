@@ -86,6 +86,7 @@ export default class App extends React.Component {
       pvW: 0,
       lang: (saved && saved.lang) || 'fr',
       apps: (saved && saved.apps) || [],
+      ivHist: (saved && saved.ivHist) || [],
       newApp: null,
       diffWith: null,
       dense: false,
@@ -161,6 +162,9 @@ export default class App extends React.Component {
     };
   }
   componentDidMount() {
+    this._flush = () => { if (this._st) this.saveLocal(); };
+    window.addEventListener('pagehide', this._flush);
+    document.addEventListener('visibilitychange', this._flush);
     document.documentElement.setAttribute('data-theme', this.state.theme);
     document.documentElement.setAttribute('data-ui', this.state.prefs.ui || 'md');
     {
@@ -225,6 +229,8 @@ export default class App extends React.Component {
     }, 60000);
   }
   componentWillUnmount() {
+    window.removeEventListener('pagehide', this._flush);
+    document.removeEventListener('visibilitychange', this._flush);
     window.removeEventListener('resize', this._rs);
     if (this._ro) this._ro.disconnect();
     window.removeEventListener('keydown', this._kd);
@@ -278,6 +284,16 @@ export default class App extends React.Component {
     this.maybeSkillSugs();
     this._prev = { ...this.state };
   }
+  /* Écriture sur l'appareil. Appelée après un court délai, et tout de suite si la page se ferme. */
+  saveLocal() {
+    clearTimeout(this._st);
+    this._st = null;
+    const st = this.state,
+      set = settingsOf(st);
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ versions: st.versions, apps: st.apps, ivHist: st.ivHist, ...set }));
+    } catch (e) {}
+  }
   persist(ps, s) {
     const keys = [
       'versions',
@@ -290,6 +306,7 @@ export default class App extends React.Component {
       'letFont',
       'letSize',
       'apps',
+      'ivHist',
       'lang',
       'prefs',
       'ad',
@@ -301,13 +318,7 @@ export default class App extends React.Component {
     ];
     if (!keys.some((k) => ps[k] !== s[k])) return;
     clearTimeout(this._st);
-    this._st = setTimeout(() => {
-      const st = this.state,
-        set = settingsOf(st);
-      try {
-        localStorage.setItem(KEY, JSON.stringify({ versions: st.versions, apps: st.apps, ...set }));
-      } catch (e) {}
-    }, 400);
+    this._st = setTimeout(() => this.saveLocal(), 400);
     const u = s.auth.user;
     if (!u || !this._pulled || !window.CVStore) return;
     clearTimeout(this._sy);
@@ -315,7 +326,7 @@ export default class App extends React.Component {
       const st = this.state;
       if (!st.auth.user) return;
       this.setState({ sync: 'saving' });
-      window.CVStore.push(st.auth.user.id, { versions: st.versions, apps: st.apps, settings: settingsOf(st) })
+      window.CVStore.push(st.auth.user.id, { versions: st.versions, apps: st.apps, interviews: st.ivHist, settings: settingsOf(st) })
         .then(() => this.setState({ sync: 'ok' }))
         .catch((e) => {
           console.error(e);
@@ -410,13 +421,15 @@ export default class App extends React.Component {
       if (r.versions.length) {
         const cid = r.settings && r.versions.some((v) => v.id === r.settings.currentId) ? r.settings.currentId : r.versions[0].id;
         this._hist = {};
-        this.setState({ versions: r.versions, apps: r.apps, currentId: cid, sync: 'ok' });
+        // Historique des entretiens : celui du compte, complété par les séances faites sur cet appareil avant connexion.
+        const ivHist = r.interviews ? [...r.interviews, ...this.state.ivHist.filter((x) => !r.interviews.some((y) => y.id === x.id))].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 100) : this.state.ivHist;
+        this.setState({ versions: r.versions, apps: r.apps, ivHist, currentId: cid, sync: 'ok' });
         this.applySettings(r.settings || {});
       } else {
         const st = this.state;
         const hasWork = st.versions.some((v) => cvText(v.cv).replace(/\s|\|/g, '').length > 10);
         const versions = hasWork ? st.versions : st.versions;
-        await window.CVStore.push(u.id, { versions, apps: st.apps, settings: settingsOf(st) });
+        await window.CVStore.push(u.id, { versions, apps: st.apps, interviews: st.ivHist, settings: settingsOf(st) });
         this.setState({ sync: 'ok' });
         if (hasWork) this.toast('Vos CV de ce navigateur ont été enregistrés dans votre compte');
       }
@@ -439,6 +452,7 @@ export default class App extends React.Component {
       versions: [v],
       currentId: v.id,
       apps: [],
+      ivHist: [],
       comments: [],
       sync: 'local',
       share: { ...st.share, open: false, link: '', token: '' },
@@ -917,7 +931,8 @@ export default class App extends React.Component {
     const cv = s.anon ? anonCv(this.cur().cv) : this.cur().cv;
     const offerText = (L.src === 'offer' ? s.ad.offer || L.offerText : L.offerText || s.ad.offer) || '';
     const lang = L.lang || (cv.lang === 'en' ? 'en' : s.lang === 'en' ? 'en' : 'fr');
-    const base = { cv, offer: { company: L.company, role: L.role, text: offerText }, tone: L.tone, mode: L.mode, oldLetter: L.old, lang };
+    const brief = s.brief && s.brief.data && s.brief.data.found && s.brief.key === briefKey(L.company) ? s.brief.data : null;
+    const base = { cv, offer: { company: L.company, role: L.role, text: offerText }, tone: L.tone, mode: L.mode, oldLetter: L.old, lang, brief };
     const tidy = (t) => (lang === 'en' ? t : NT().autoFix(t).text);
     const diag = (st) => (st.letter.mode === 'improve' ? letterDiag(st.letter.old, st.letter.company) : null);
 
@@ -1987,6 +2002,11 @@ export default class App extends React.Component {
         busy: s.briefBusy,
         gen: () => this.briefGen(),
       },
+      ivHist: {
+        list: s.ivHist,
+        add: (x) => this.setState((st) => ({ ivHist: [x, ...st.ivHist.filter((y) => y.id !== x.id)].slice(0, 100) })),
+        remove: (id) => this.setState((st) => ({ ivHist: st.ivHist.filter((y) => y.id !== id) })),
+      },
       mock: {
         cv,
         analysis: s.ad.analysis || null,
@@ -2859,6 +2879,7 @@ export default class App extends React.Component {
               account: u ? { id: u.id, email: u.email, name: u.name, provider: u.provider } : null,
               versions: s.versions,
               applications: s.apps,
+              interviews: s.ivHist,
               settings: settingsOf(s),
               reviewComments: s.comments,
             },

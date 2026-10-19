@@ -7,7 +7,8 @@
      { type: 'state', state: 'connecting' | 'listening' | 'speaking' | 'ending' | 'closed' }
      { type: 'transcript', entries: [{ role: 'recruiter' | 'candidate', text }] }
      { type: 'level', level }          niveau du micro (0 à 1)
-     { type: 'end', entries, reason }  fin de l'entretien ('done' | 'stopped' | 'lost')
+     { type: 'end', entries, turns, reason }  fin de l'entretien ('done' | 'stopped' | 'lost') ;
+                                      turns : temps de parole de chaque réponse, pour l'analyse de l'oral
      { type: 'error', message } */
 
 export const liveSupported = () =>
@@ -37,10 +38,20 @@ export class LiveInterview {
     this.ending = false;
     this.stopped = false;
     this.muted = false;
+    this.turns = [];
+    this.turn = null;
   }
 
   set(state) {
-    if (this.state !== state) { this.state = state; this.on({ type: 'state', state }); }
+    if (this.state === state) return;
+    // Mesure du temps de parole : une « réponse » va du premier au dernier son capté pendant que c'est à la personne.
+    if (this.state === 'listening' && this.turn) {
+      if (this.turn.first) this.turns.push({ speechMs: this.turn.speech, durMs: this.turn.last - this.turn.first + 100 });
+      this.turn = null;
+    }
+    if (state === 'listening') this.turn = { speech: 0, first: 0, last: 0 };
+    this.state = state;
+    this.on({ type: 'state', state });
   }
   add(role, text) {
     if (!text) return;
@@ -101,6 +112,12 @@ export class LiveInterview {
 
   onMic({ pcm, level }) {
     this.on({ type: 'level', level: this.muted || this.state !== 'listening' ? 0 : level });
+    if (this.turn && !this.muted && level > 0.02) {
+      const now = Date.now();
+      if (!this.turn.first) this.turn.first = now;
+      this.turn.last = now;
+      this.turn.speech += 100;
+    }
     // Semi-duplex : le micro n'est pas transmis pendant que le recruteur parle (évite l'écho).
     if (!this.ws || this.muted || this.state !== 'listening') return;
     try { this.ws.sendRealtimeInput({ audio: { data: toB64(pcm), mimeType: 'audio/pcm;rate=16000' } }); } catch { /* connexion en cours de reprise */ }
@@ -185,7 +202,7 @@ export class LiveInterview {
     this.stopped = true;
     this.cleanup();
     this.set('closed');
-    this.on({ type: 'end', reason, detail, entries: this.entries.map(e => ({ ...e, text: e.text.trim() })).filter(e => e.text) });
+    this.on({ type: 'end', reason, detail, turns: this.turns.slice(), entries: this.entries.map(e => ({ ...e, text: e.text.trim() })).filter(e => e.text) });
   }
   cleanup() {
     this.stopAudio();

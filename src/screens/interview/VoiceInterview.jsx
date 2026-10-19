@@ -1,9 +1,11 @@
 /* Entretien vocal (Gemini Live) : conversation à voix haute avec le recruteur, transcription en direct,
    puis bilan STAR de chaque réponse à partir de la transcription. */
 import React, { useState, useRef, useEffect } from 'react';
-import { Muted, Btn, Seg } from '../../components/ui.jsx';
+import { Muted, Btn } from '../../components/ui.jsx';
 import { Feedback, Summary, bubble } from './Feedback.jsx';
 import { LiveInterview } from '../../services/live.js';
+import { oralStats } from '../../lib/oral.js';
+import OralReport from './OralReport.jsx';
 
 const STATES = {
   connecting: ['Connexion au recruteur…', 'var(--mu)'],
@@ -27,8 +29,9 @@ function Status({ state, level, muted }) {
   );
 }
 
-export default function VoiceInterview({ m, onLock }) {
-  const [total, setTotal] = useState(5);
+export default function VoiceInterview({ m, opts, onLock, onSave }) {
+  const { total, lang, tone, voice } = opts;
+  const [oral, setOral] = useState(null);
   const [phase, setPhase] = useState('idle'); // idle | live | review | done
   const [state, setState] = useState('connecting');
   const [level, setLevel] = useState(0);
@@ -42,16 +45,17 @@ export default function VoiceInterview({ m, onLock }) {
   useEffect(() => { end.current && end.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [entries, phase, review]);
   useEffect(() => () => live.current && live.current.stop(), []);
 
-  async function analyse(list) {
+  async function analyse(list, o) {
     setPhase('review'); setError('');
     try {
-      const r = await window.CVAI.reviewInterview({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, transcript: list });
+      const r = await window.CVAI.reviewInterview({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, transcript: list, lang });
       setReview(r); setPhase('done');
+      onSave({ mode: 'voice', voice, summary: r.summary, items: r.items, oral: o || null });
     } catch (e) { setError(e.message || 'Le bilan n’a pas pu être établi.'); setPhase('done'); }
   }
 
   async function start() {
-    setEntries([]); setReview(null); setError(''); setMuted(false); setPhase('live'); setState('connecting');
+    setEntries([]); setReview(null); setOral(null); setError(''); setMuted(false); setPhase('live'); setState('connecting');
     const s = new LiveInterview(ev => {
       if (ev.type === 'state') setState(ev.state);
       else if (ev.type === 'level') setLevel(ev.level);
@@ -60,12 +64,14 @@ export default function VoiceInterview({ m, onLock }) {
         live.current = null;
         setEntries(ev.entries);
         if (ev.reason === 'lost') setError('La connexion au recruteur a été interrompue. Le bilan porte sur les réponses déjà données.');
-        if (ev.entries.some(e => e.role === 'candidate')) analyse(ev.entries);
+        const o = oralStats(ev.entries, ev.turns, lang);
+        setOral(o);
+        if (ev.entries.some(e => e.role === 'candidate')) analyse(ev.entries, o);
         else { setPhase('idle'); if (ev.reason !== 'stopped') setError('Aucune réponse n’a été entendue. Vérifiez votre micro et réessayez.'); }
       }
     });
     live.current = s;
-    try { await s.start({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, total, lang: m.lang }); }
+    try { await s.start({ cv: m.cv, offer: m.offer, analysis: m.analysis, brief: m.brief, total, lang, tone, voice }); }
     catch (e) { live.current = null; setPhase('idle'); setError(e.message || 'L’entretien vocal n’a pas pu démarrer.'); }
   }
   const toggleMute = () => { const v = !muted; setMuted(v); live.current && live.current.setMuted(v); };
@@ -78,7 +84,6 @@ export default function VoiceInterview({ m, onLock }) {
             Parlez comme en vrai entretien : le recruteur pose ses questions à voix haute et vous laisse répondre. Des écouteurs donnent un meilleur résultat. Votre voix est transmise à Google (Gemini Live) le temps de la conversation ; elle n’est pas enregistrée.
           </Muted>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <Seg value={String(total)} options={[['3', '3 questions'], ['5', '5'], ['8', '8']]} onChange={k => setTotal(Number(k))} />
             <Btn kind="ai" onClick={start}>Démarrer l’entretien vocal</Btn>
           </div>
         </div>
@@ -109,6 +114,7 @@ export default function VoiceInterview({ m, onLock }) {
       {phase === 'review' ? <Muted>Analyse de vos réponses avec la méthode STAR…</Muted> : null}
       {error ? <div role="alert" style={{ padding: '10px 12px', borderRadius: '10px', background: 'var(--ers)', color: 'var(--er)', fontSize: '13px', fontWeight: 600 }}>{error}</div> : null}
 
+      {oral && phase !== 'live' ? <OralReport o={oral} /> : null}
       {review ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {(review.items || []).map((it, i) => (
@@ -125,8 +131,8 @@ export default function VoiceInterview({ m, onLock }) {
 
       {phase === 'done' ? (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {!review && entries.some(e => e.role === 'candidate') ? <Btn kind="ai" onClick={() => analyse(entries)}>Relancer le bilan</Btn> : null}
-          <Btn onClick={() => { setPhase('idle'); setEntries([]); setReview(null); setError(''); }}>Nouvel entretien</Btn>
+          {!review && entries.some(e => e.role === 'candidate') ? <Btn kind="ai" onClick={() => analyse(entries, oral)}>Relancer le bilan</Btn> : null}
+          <Btn onClick={() => { setPhase('idle'); setEntries([]); setReview(null); setOral(null); setError(''); }}>Nouvel entretien</Btn>
         </div>
       ) : null}
     </>

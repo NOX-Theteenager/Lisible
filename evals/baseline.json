@@ -1,18 +1,18 @@
 {
-  "date": "2026-10-19T01:09:29.042Z",
+  "date": "2026-10-19T07:29:31.362Z",
   "provider": "claude",
   "models": {
     "gemini": "gemini-3.6-flash",
     "claude": "claude-sonnet-5-5"
   },
-  "total": 98,
+  "total": 99,
   "byTask": {
     "parse": [
       49,
       50
     ],
     "analyze": [
-      39,
+      40,
       40
     ],
     "bullet": [
@@ -20,14 +20,22 @@
       20
     ],
     "letter": [
-      54,
+      56,
       58
+    ],
+    "interview": [
+      70,
+      70
+    ],
+    "oral": [
+      20,
+      20
     ]
   },
   "results": [
     {
       "id": "ci-commercial-abidjan",
-      "ms": 39055,
+      "ms": 29060,
       "checks": [
         {
           "task": "parse",
@@ -130,13 +138,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "1 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Monsieur Konan, merci d'être avec nous, mettez-vous à l'aise. Pour commencer, pouvez-vous me raconter une situation où vous avez dû mobiliser votre équi"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Monsieur Konan, merci d'être avec nous, mettez-vous à l'aise. Pour comme"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "6 vs 2"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "4"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "135 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "cm-anglophone-nurse",
-      "ms": 44446,
+      "ms": 28455,
       "checks": [
         {
           "task": "parse",
@@ -233,13 +295,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": false,
           "detail": "4 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Hello Grace, thank you for joining me, and please make yourself comfortable. To start, could you tell me what draws you to this Maternity Nurse position with Mé"
+        },
+        {
+          "task": "interview",
+          "name": "question en anglais",
+          "ok": true,
+          "detail": "Hello Grace, thank you for joining me, and please make yourself comfortable. To "
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"um\":1,\"uh\":1,\"you know\":1,\"basically\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "135 mots/min"
         }
       ],
-      "score": 94
+      "score": 100
     },
     {
       "id": "cm-comptable-douala",
-      "ms": 47356,
+      "ms": 34496,
       "checks": [
         {
           "task": "parse",
@@ -342,13 +458,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": false,
           "detail": "4 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Madame Mballa, et merci d'être venue, mettez-vous à l'aise. Pour commencer, pouvez-vous me raconter comment, à la Société Industrielle du Littoral, vous"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Madame Mballa, et merci d'être venue, mettez-vous à l'aise. Pour commenc"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "8 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "123 mots/min"
         }
       ],
-      "score": 88
+      "score": 100
     },
     {
       "id": "cm-ingenieur-yaounde",
-      "ms": 46574,
+      "ms": 31512,
       "checks": [
         {
           "task": "parse",
@@ -451,13 +621,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "3 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Monsieur Essomba, merci d'être là, mettez-vous à l'aise. Pour commencer, pouvez-vous me dire ce qui vous attire dans ce poste de conducteur de travaux c"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Monsieur Essomba, merci d'être là, mettez-vous à l'aise. Pour commencer,"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "153 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "fr-comptable",
-      "ms": 45105,
+      "ms": 36134,
       "checks": [
         {
           "task": "parse",
@@ -560,13 +784,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "2 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Karim, merci d'être là, mettez-vous à l'aise ! Pour commencer, pouvez-vous me raconter ce qui vous donne envie de passer d'un cabinet d'expertise compta"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Karim, merci d'être là, mettez-vous à l'aise ! Pour commencer, pouvez-vo"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "8 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "174 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "fr-dev-fullstack",
-      "ms": 46028,
+      "ms": 33172,
       "checks": [
         {
           "task": "parse",
@@ -669,13 +947,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "3 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Julie, ravi de vous rencontrer, et merci d'avoir pris ce temps, mettez-vous à l'aise ! Pour démarrer en douceur : qu'est-ce qui vous donne envie de rejo"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Julie, ravi de vous rencontrer, et merci d'avoir pris ce temps, mettez-v"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 2"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "129 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "fr-jeune-diplome-marketing",
-      "ms": 41190,
+      "ms": 27552,
       "checks": [
         {
           "task": "parse",
@@ -778,13 +1110,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "3 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Léa, ravi·e de vous rencontrer, et merci d'avoir pris ce temps ! Pour commencer en douceur : qu'est-ce qui vous attire dans ce poste de chargée de marke"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Léa, ravi·e de vous rencontrer, et merci d'avoir pris ce temps ! Pour co"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "8 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "6"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "105 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "intl-software-engineer",
-      "ms": 41481,
+      "ms": 27633,
       "checks": [
         {
           "task": "parse",
@@ -881,13 +1267,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "1 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Hi Daniel, thanks so much for joining me today, and please take your time. To start, could you tell me what draws you to the Payments team at Stripe in particul"
+        },
+        {
+          "task": "interview",
+          "name": "question en anglais",
+          "ok": true,
+          "detail": "Hi Daniel, thanks so much for joining me today, and please take your time. To st"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 2"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"um\":1,\"uh\":1,\"you know\":1,\"basically\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "117 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "ma-data-casablanca",
-      "ms": 41877,
+      "ms": 25388,
       "checks": [
         {
           "task": "parse",
@@ -990,13 +1430,67 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "1 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Yassine, merci d'être là, et n'hésitez pas à prendre votre temps. Pour commencer, pouvez-vous me dire ce qui vous attire chez Inwi et dans ce poste de D"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Yassine, merci d'être là, et n'hésitez pas à prendre votre temps. Pour c"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 2"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "129 mots/min"
         }
       ],
       "score": 100
     },
     {
       "id": "sn-ong-dakar",
-      "ms": 40302,
+      "ms": 28459,
       "checks": [
         {
           "task": "parse",
@@ -1099,6 +1593,60 @@
           "name": "au plus 3 repères à compléter",
           "ok": true,
           "detail": "3 repère(s)"
+        },
+        {
+          "task": "interview",
+          "name": "1re question posée",
+          "ok": true,
+          "detail": "Bonjour Madame Diop, merci d'être là, et n'hésitez pas à prendre votre temps. Pour commencer, pouvez-vous me raconter ce qui vous attire dans ce poste de coordi"
+        },
+        {
+          "task": "interview",
+          "name": "question en français",
+          "ok": true,
+          "detail": "Bonjour Madame Diop, merci d'être là, et n'hésitez pas à prendre votre temps. Po"
+        },
+        {
+          "task": "interview",
+          "name": "2 questions évaluées",
+          "ok": true,
+          "detail": "2 élément(s)"
+        },
+        {
+          "task": "interview",
+          "name": "bonne réponse mieux notée (+3)",
+          "ok": true,
+          "detail": "7 vs 3"
+        },
+        {
+          "task": "interview",
+          "name": "résultat repéré (STAR)",
+          "ok": true,
+          "detail": "{\"s\":true,\"t\":true,\"a\":true,\"r\":true} / {\"s\":false,\"t\":false,\"a\":false,\"r\":false}"
+        },
+        {
+          "task": "interview",
+          "name": "réponses améliorées sans chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "interview",
+          "name": "bilan noté sur 10",
+          "ok": true,
+          "detail": "5"
+        },
+        {
+          "task": "oral",
+          "name": "mots de remplissage comptés",
+          "ok": true,
+          "detail": "{\"euh\":2,\"du coup\":1,\"en fait\":1,\"voilà\":1}"
+        },
+        {
+          "task": "oral",
+          "name": "débit calculé (20 s de parole)",
+          "ok": true,
+          "detail": "144 mots/min"
         }
       ],
       "score": 100

@@ -2,6 +2,7 @@ import React from 'react';
 import { ps } from '../lib/pseudo.js';
 import MockInterview from './interview/MockInterview.jsx';
 import CompanyBrief from './interview/CompanyBrief.jsx';
+import InterviewHistory from './interview/InterviewHistory.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function Interview({ v }) {
@@ -390,6 +391,7 @@ export default function Interview({ v }) {
               </>
             ) : null}{' '}
             <MockInterview v={v} />
+            <InterviewHistory v={v} />
       </div>{' '}
         </>
       ) : null}

@@ -125,3 +125,11 @@ export function offerInsights(an) {
   if (!req.length && !miss.length && !kw.length) return '';
   return `Analyse de l'adéquation CV / offre :${req.length ? '\nExigences du poste (✓ couverte par le CV, ✗ non démontrée) :\n' + req.join('\n') : ''}${miss.length ? '\nCompétences demandées absentes du CV : ' + miss.join(', ') : ''}${kw.length ? '\nMots-clés importants : ' + kw.join(', ') : ''}`;
 }
+
+/* Style du recruteur simulé (écrit et vocal). */
+export const INTERVIEW_TONES = {
+  kind: "Style : bienveillant·e et encourageant·e. Tu mets la personne à l'aise ; relances douces quand une réponse est floue.",
+  tough: "Style : exigeant·e et direct·e, comme un entretien difficile. Tu relances systématiquement une réponse vague (« Concrètement ? », « Quel résultat chiffré ? »), tu peux contredire poliment ou pointer une faiblesse du CV. Jamais agressif·ve ni humiliant·e.",
+  panel: "Style : entretien en panel avec deux personnes. Une responsable RH (motivation, comportement, adéquation avec l'entreprise) et un·e manager opérationnel·le (questions métier et mises en situation). Elles alternent ; à chaque question, la personne qui parle se nomme (« Ici [prénom], manager de l'équipe… »).",
+};
+export const toneOf = (t) => INTERVIEW_TONES[t] || INTERVIEW_TONES.kind;
