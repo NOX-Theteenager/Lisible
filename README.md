@@ -94,12 +94,13 @@ Le PDF est généré par Chromium : en local, Chrome installé est utilisé (ou 
 
 ## Évaluation de la qualité
 
-`evals/cases.json` contient 10 CV et offres fictifs (France, Cameroun francophone et anglophone, Côte d'Ivoire, Sénégal, Maroc, international). Chaque passage vérifie l'import (faits perdus ou inventés), l'analyse d'offre, les suggestions la lettre (longueur, langue, entreprise citée, chiffres inventés, clichés, repères à compléter), la simulation d'entretien (première question dans la bonne langue ; bilan d'un entretien avec une réponse STAR solide et une réponse creuse : la solide doit être nettement mieux notée, le résultat repéré, aucun chiffre inventé) et l'analyse de l'oral (sans IA), puis compare à `evals/baseline.json`.
+`evals/cases.json` contient 10 CV et offres fictifs (France, Cameroun francophone et anglophone, Côte d'Ivoire, Sénégal, Maroc, international). Chaque passage vérifie l'import (faits perdus ou inventés), l'analyse d'offre, les suggestions la lettre (longueur, langue, entreprise citée, chiffres inventés, clichés, repères à compléter), la simulation d'entretien (première question dans la bonne langue ; bilan d'un entretien avec une réponse STAR solide et une réponse creuse : la solide doit être nettement mieux notée, le résultat repéré, aucun chiffre inventé) l'analyse de l'oral (sans IA) et le mode Études (`evals/study-cases.json` : projet d'études Campus France et Parcoursup, statement of purpose, lettre d'école d'ingénieurs, première question du jury), puis compare à `evals/baseline.json`.
 
 ```bash
 npm run eval -- --provider=claude            # ou gemini, ou sans option (fournisseur actuel)
 npm run eval -- --only=cm-comptable-douala   # un ou plusieurs cas
-npm run eval -- --tasks=interview,oral       # seulement certaines tâches
+npm run eval -- --tasks=interview,oral       # seulement certaines tâches (oral : sans aucun appel d'IA)
+npm run eval -- --tasks=study                # mode Études seulement (2 appels par cas)
 npm run eval -- --save-baseline              # enregistre la référence (fusion par cas et par tâche)
 ```
 

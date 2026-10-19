@@ -6,7 +6,8 @@
      npm run eval -- --only=cm-comptable-douala,fr-comptable --tasks=parse,letter
      npm run eval -- --save-baseline       → enregistre ce passage comme référence
    Chaque passage coûte des appels d'API (6 par cas). Tâches : parse, analyze, bullet, letter, interview
-   (première question + bilan d'un entretien avec une bonne et une mauvaise réponse), oral (sans IA). */
+   (première question + bilan d'un entretien avec une bonne et une mauvaise réponse), oral (sans IA),
+   study (mode Études, evals/study-cases.json : projet d'études, statement of purpose, lettre, 1re question du jury ; 2 appels par cas). */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,11 +16,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const arg = (k, d) => { const a = process.argv.find(x => x.startsWith('--' + k + '=')); return a ? a.split('=')[1] : process.argv.includes('--' + k) ? true : d; };
 const provider = arg('provider', 'auto');
 if (provider === 'claude' || provider === 'gemini') process.env.AI_PROVIDER = provider;
-const TASKS_ON = String(arg('tasks', 'parse,analyze,bullet,letter,interview,oral')).split(',');
+const TASKS_ON = String(arg('tasks', 'parse,analyze,bullet,letter,interview,oral,study')).split(',');
 const only = arg('only', '') ? String(arg('only')).split(',') : null;
 
 const { TASKS } = await import('../server/tasks.js');
 const { writeLetter } = await import('../server/claude.js');
+const { reqCtx } = await import('../server/context.js');
 const { cvText } = await import('../src/lib/cv.js');
 const { missing } = await import('../src/lib/facts.js');
 const { oralStats, countFillers } = await import('../src/lib/oral.js');
@@ -29,7 +31,9 @@ const NT = globalThis.NoTics;
 await import('../src/services/ai-adapter.js');
 const normalizeCv = globalThis.CVAI.normalizeCv;
 
-const cases = JSON.parse(fs.readFileSync(path.join(here, 'cases.json'), 'utf8')).filter(c => !only || only.includes(c.id));
+const JOB_TASKS = ['parse', 'analyze', 'bullet', 'letter', 'interview', 'oral'];
+const cases = TASKS_ON.some(t => JOB_TASKS.includes(t)) ? JSON.parse(fs.readFileSync(path.join(here, 'cases.json'), 'utf8')).filter(c => !only || only.includes(c.id)) : [];
+const studyCases = TASKS_ON.includes('study') ? JSON.parse(fs.readFileSync(path.join(here, 'study-cases.json'), 'utf8')).filter(c => !only || only.includes(c.id)) : [];
 const plain = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const words = s => (String(s || '').match(/\S+/g) || []).length;
 /* Une entreprise est « citée » par son nom, son premier mot ou son sigle (MSF, CRBC…). */
@@ -47,7 +51,8 @@ async function runCase(c) {
   const ctx = { market: c.market, lang: c.lang };
   const src = c.cvText + '\n' + c.offer;
   try {
-    if (TASKS_ON.includes('parse') || TASKS_ON.some(t => t !== 'parse')) {
+    // Lecture du CV seulement si une tâche en a besoin (« oral » et « study » n'appellent pas l'IA pour cela).
+    if (TASKS_ON.some(t => ['parse', 'analyze', 'bullet', 'letter', 'interview'].includes(t))) {
       const r = await TASKS.parseCv({ fileName: c.id + '.txt', mimeType: 'text/plain', text: c.cvText, mode: 'full' });
       cv = normalizeCv(r.cv);
       if (TASKS_ON.includes('parse')) {
@@ -148,10 +153,46 @@ async function runCase(c) {
   return { id: c.id, ms: Date.now() - t0, checks, score: checks.length ? Math.round((checks.filter(x => x.ok).length / checks.length) * 100) : 0 };
 }
 
-console.log(`Évaluation : ${cases.length} cas · fournisseur ${provider} · tâches ${TASKS_ON.join(', ')}\n`);
+/* Mode Études : le serveur lit l'objectif dans le contexte de la requête ; on le reproduit ici. */
+async function runStudy(c) {
+  const checks = [], add = (task, name, ok, detail = '') => checks.push({ task, name, ok: !!ok, detail: String(detail).slice(0, 160) });
+  const t0 = Date.now(), en = c.lang === 'en';
+  const offer = { company: c.school, role: c.program, text: c.text };
+  const src = cvText({ order: ['summary', 'experience', 'education', 'skills', 'languages', 'projects', 'certifications'], ...c.cv }) + '\n' + c.text + '\n' + c.school + ' ' + c.program;
+  await reqCtx.run({ track: 'study' }, async () => {
+    try {
+      const { text } = await writeLetter({ cv: c.cv, offer, tone: 'Sobre', mode: 'new', doc: c.doc, limit: c.limit, market: c.market, lang: c.lang });
+      const body = c.doc === 'lettre' ? letterBody(text) : text;
+      if (c.limit) add('study', `au plus ${c.limit} caractères`, text.length <= c.limit, text.length + ' caractères');
+      else if (c.doc === 'sop') add('study', 'statement : 500 à 1 000 mots', words(body) >= 500 && words(body) <= 1000, words(body) + ' mots');
+      else add('study', 'lettre : 220 à 420 mots', words(body) >= 220 && words(body) <= 420, words(body) + ' mots');
+      add('study', c.doc === 'lettre' ? 'formule d’appel présente' : 'ni formule d’appel ni signature', c.doc === 'lettre' ? /Madame|Monsieur|Dear/.test(body) : !/^(Madame|Monsieur|Dear|To whom)/m.test(text.trim()) && !text.trim().endsWith(c.cv.contact.name), body.slice(0, 40));
+      add('study', 'établissement ou formation cités', cites(body, c.school) || plain(body).includes(plain(c.program).split(' ').slice(0, 2).join(' ')), c.school);
+      const inv = missing(body, src);
+      add('study', 'aucun chiffre inventé', !inv.length, inv.join(' · '));
+      add('study', en ? 'rédigé en anglais' : 'rédigé en français', en ? /\b(the|and|my|I)\b/.test(body) && !/\b(je|mon|les)\b/i.test(body) : /\b(je|mon|ma|les)\b/i.test(body), body.slice(0, 40));
+      const cl = /depuis mon plus jeune âge|toujours été passionn|prestigieu|c'est avec un grand intérêt|je me permets|since I was a child|always been passionate|prestigious/i.exec(body);
+      add('study', 'aucun cliché de candidature', !cl, cl ? cl[0] : '');
+      if (!en) {
+        const hits = NT.analyze(body).hits.filter(h => h.cat === 'creux' || h.cat === 'cliche');
+        add('study', 'aucune formule creuse (NoTics)', !hits.length, hits.map(h => h.match).join(' · '));
+      }
+      const br = (body.match(/\[[^\]]+\]/g) || []).length;
+      add('study', 'au plus 5 repères à compléter', br <= 5, br + ' repère(s)');
+    } catch (e) { add('study', 'texte : appel réussi', false, e.message); }
+    try {
+      const r = await TASKS.mockInterview({ cv: c.cv, offer, history: [], total: 3, market: c.market, lang: c.lang, tone: 'campus' });
+      const q = String(r.nextQuestion || '');
+      add('study', 'jury : question sur le projet d’études', /formation|études|programme|master|cursus|école|projet|parcours|program|course|stud|degree|MSc|BUT/i.test(q), q.slice(0, 120));
+    } catch (e) { add('study', 'jury : appel réussi', false, e.message); }
+  });
+  return { id: c.id, ms: Date.now() - t0, checks, score: checks.length ? Math.round((checks.filter(x => x.ok).length / checks.length) * 100) : 0 };
+}
+
+console.log(`Évaluation : ${cases.length + studyCases.length} cas · fournisseur ${provider} · tâches ${TASKS_ON.join(', ')}\n`);
 const results = [];
-const queue = [...cases];
-await Promise.all(Array.from({ length: 3 }, async () => { while (queue.length) { const c = queue.shift(); const r = await runCase(c); results.push(r); console.log(`${String(r.score).padStart(3)} %  ${r.id.padEnd(28)} ${(r.ms / 1000).toFixed(0)} s${r.checks.filter(x => !x.ok).map(x => `\n        ✕ [${x.task}] ${x.name}${x.detail ? ' : ' + x.detail : ''}`).join('')}`); } }));
+const queue = [...cases.map(c => () => runCase(c)), ...studyCases.map(c => () => runStudy(c))];
+await Promise.all(Array.from({ length: 3 }, async () => { while (queue.length) { const job = queue.shift(); const r = await job(); results.push(r); console.log(`${String(r.score).padStart(3)} %  ${r.id.padEnd(28)} ${(r.ms / 1000).toFixed(0)} s${r.checks.filter(x => !x.ok).map(x => `\n        ✕ [${x.task}] ${x.name}${x.detail ? ' : ' + x.detail : ''}`).join('')}`); } }));
 results.sort((a, b) => a.id.localeCompare(b.id));
 const all = results.flatMap(r => r.checks), total = Math.round((all.filter(x => x.ok).length / (all.length || 1)) * 100);
 const byTask = {};

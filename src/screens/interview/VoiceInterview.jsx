@@ -65,7 +65,7 @@ export default function VoiceInterview({ m, opts, onLock, onSave }) {
         live.current = null;
         setEntries(ev.entries);
         if (ev.reason === 'lost') setError('La connexion au recruteur a été interrompue. Le bilan porte sur les réponses déjà données.');
-        const o = oralStats(ev.entries, ev.turns, lang);
+        const o = oralStats(ev.entries, ev.turns, lang, m.ui);
         setOral(o);
         if (ev.entries.some(e => e.role === 'candidate')) analyse(ev.entries, o);
         else { setPhase('idle'); if (ev.reason !== 'stopped') setError('Aucune réponse n’a été entendue. Vérifiez votre micro et réessayez.'); }
@@ -117,7 +117,7 @@ export default function VoiceInterview({ m, opts, onLock, onSave }) {
       {phase === 'review' ? <Muted>Analyse de vos réponses avec la méthode STAR…</Muted> : null}
       {error ? <div role="alert" style={{ padding: '10px 12px', borderRadius: '10px', background: 'var(--ers)', color: 'var(--er)', fontSize: '13px', fontWeight: 600 }}>{error}</div> : null}
 
-      {oral && phase !== 'live' ? <OralReport o={oral} /> : null}
+      {oral && phase !== 'live' ? <OralReport o={oral} ui={m.ui} /> : null}
       {review ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {(review.items || []).map((it, i) => (

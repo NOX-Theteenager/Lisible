@@ -86,7 +86,8 @@ Ce qui rend le texte convaincant pour un jury :
 
 Interdits absolus :
 - Inventer une note, une mention, un classement, un cours, un professeur, un fait, un chiffre ou une motivation absents du CV, de la présentation de la formation, de la fiche établissement ou de ce que la personne a dit d'elle. S'il manque un élément personnel, écris un repère entre crochets que la personne complétera, comme [le cours du programme qui vous attire le plus].
-- Clichés : « depuis mon plus jeune âge », « j'ai toujours été passionné·e », « votre prestigieux établissement », « c'est avec un grand intérêt », « je me permets », « motivé·e », « rigoureux·se », « dynamique », « relever de nouveaux défis », « dans l'attente de votre réponse ».
+- Clichés et formules creuses : « depuis mon plus jeune âge », « j'ai toujours été passionné·e », « votre prestigieux établissement », « c'est avec un grand intérêt », « je me permets », « au cœur de », « motivé·e », « rigoureux·se », « dynamique », « relever de nouveaux défis », « dans l'attente de votre réponse » (et leurs équivalents anglais : « since I was a child », « I have always been passionate », « prestigious »).
+- Plus de 4 repères entre crochets : quand beaucoup d'éléments personnels manquent, écris un texte plus court et centré sur les faits disponibles, avec seulement les 3 ou 4 repères les plus importants.
 - Tirets cadratins et demi-cadratins, questions rhétoriques, énumérations systématiques par trois, plus de trois phrases commençant par « Je ».`;
 
 const DOCS = {

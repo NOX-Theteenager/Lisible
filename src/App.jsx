@@ -2251,6 +2251,7 @@ export default class App extends React.Component {
         lang: cv.lang === 'en' || s.lang === 'en' ? 'en' : 'fr',
         offer: { company: s.letter.company, role: s.letter.role, text: s.ad.offer || s.letter.offerText || '' },
         study: s.track === 'study',
+        ui: s.lang === 'en' ? 'en' : 'fr',
         target:
           s.letter.company || s.letter.role
             ? 'Pour ' + [s.letter.role, s.letter.company].filter(Boolean).join(s.track === 'study' ? ' à ' : ' chez ')

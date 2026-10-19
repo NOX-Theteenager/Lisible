@@ -1,0 +1,80 @@
+[
+  {
+    "id": "cm-campusfrance-master-finance",
+    "market": "cm",
+    "lang": "fr",
+    "doc": "projet",
+    "limit": 1500,
+    "school": "Université Paris-Dauphine",
+    "program": "Master Finance d'entreprise",
+    "text": "Le master Finance d'entreprise forme aux métiers de l'analyse financière, de l'évaluation d'entreprise, du financement et du contrôle de gestion. Il comprend un stage de 6 mois en M2. Admission sur dossier pour les titulaires d'une licence en économie ou gestion.",
+    "cv": {
+      "contact": { "name": "Aïcha Mballa", "title": "Étudiante en économie et gestion", "city": "Douala, Cameroun", "email": "aicha.mballa@exemple.cm" },
+      "summary": "",
+      "experiences": [{ "role": "Stagiaire en contrôle de gestion", "company": "Société Industrielle du Littoral", "city": "Douala", "start": "06/2025", "end": "09/2025", "bullets": ["Mise à jour du tableau de bord mensuel des coûts de production", "Analyse des écarts budgétaires de 3 ateliers"] }],
+      "education": [{ "degree": "Licence en économie et gestion", "school": "Université de Douala", "start": "2022", "end": "2025", "details": "Mémoire : le financement des PME camerounaises par le microcrédit" }],
+      "skills": ["Excel", "Analyse financière"],
+      "languages": [{ "name": "Français", "level": "Langue maternelle" }, { "name": "Anglais", "level": "Courant (C1)" }],
+      "projects": [], "certifications": []
+    }
+  },
+  {
+    "id": "cm-anglophone-sop-data-science",
+    "market": "intl",
+    "lang": "en",
+    "doc": "sop",
+    "limit": 0,
+    "school": "University of Edinburgh",
+    "program": "MSc Data Science",
+    "text": "The MSc Data Science provides training in machine learning, statistics and data management, with a dissertation project in the summer. Applicants need a UK 2:1 honours degree or international equivalent in a quantitative subject.",
+    "cv": {
+      "contact": { "name": "Emmanuel Tabe", "title": "Computer Science Graduate", "city": "Buea, Cameroon", "email": "emmanuel.tabe@example.cm" },
+      "summary": "",
+      "experiences": [{ "role": "Data Intern", "company": "MTN Cameroon", "city": "Douala", "start": "02/2025", "end": "07/2025", "bullets": ["Cleaned and analysed customer churn data with Python and SQL", "Built a churn dashboard used by the retention team"] }],
+      "education": [{ "degree": "BSc Computer Science", "school": "University of Buea", "start": "2021", "end": "2025", "details": "Final-year project: predicting maize yields in the North West Region from rainfall data" }],
+      "skills": ["Python", "SQL", "pandas", "scikit-learn"],
+      "languages": [{ "name": "English", "level": "Native" }, { "name": "French", "level": "Intermediate (B1)" }],
+      "projects": [{ "name": "Maize yield prediction", "desc": "Regression models on 10 years of rainfall data", "link": "" }],
+      "certifications": []
+    }
+  },
+  {
+    "id": "fr-parcoursup-but-informatique",
+    "market": "fr",
+    "lang": "fr",
+    "doc": "projet",
+    "limit": 1500,
+    "school": "IUT de Lannion",
+    "program": "BUT Informatique",
+    "text": "Le BUT Informatique forme en trois ans des développeurs et développeuses : programmation, bases de données, réseaux, gestion de projet. Projets en équipe chaque semestre et stage en entreprise.",
+    "cv": {
+      "contact": { "name": "Lucas Martin", "title": "Lycéen en terminale générale", "city": "Brest", "email": "lucas.martin@exemple.fr" },
+      "summary": "",
+      "experiences": [{ "role": "Bénévole", "company": "Repair Café de Brest", "city": "Brest", "start": "09/2024", "end": "", "bullets": ["Aide à la réparation d'ordinateurs portables un samedi par mois"] }],
+      "education": [{ "degree": "Baccalauréat général, spécialités NSI et mathématiques", "school": "Lycée de l'Iroise", "start": "2023", "end": "2026", "details": "" }],
+      "skills": ["Python", "HTML et CSS"],
+      "languages": [{ "name": "Français", "level": "Langue maternelle" }, { "name": "Anglais", "level": "Intermédiaire (B1)" }],
+      "projects": [{ "name": "Jeu du pendu en Python", "desc": "Projet de NSI réalisé en binôme", "link": "" }],
+      "certifications": []
+    }
+  },
+  {
+    "id": "sn-lettre-ecole-ingenieurs",
+    "market": "afr",
+    "lang": "fr",
+    "doc": "lettre",
+    "limit": 0,
+    "school": "École supérieure polytechnique de Dakar",
+    "program": "Diplôme d'ingénieur en génie civil",
+    "text": "Le cycle ingénieur en génie civil (3 ans) forme à la conception et à la conduite de projets de bâtiments et d'infrastructures. Admission sur concours après un DUT, une licence ou deux années de classes préparatoires.",
+    "cv": {
+      "contact": { "name": "Moussa Ndiaye", "title": "Titulaire d'un DUT en génie civil", "city": "Thiès, Sénégal", "email": "moussa.ndiaye@exemple.sn" },
+      "summary": "",
+      "experiences": [{ "role": "Stagiaire assistant conducteur de travaux", "company": "Compagnie Sahélienne d'Entreprises", "city": "Thiès", "start": "04/2025", "end": "07/2025", "bullets": ["Suivi quotidien du chantier d'un bâtiment scolaire R+2", "Métrés et préparation des situations de travaux"] }],
+      "education": [{ "degree": "DUT en génie civil", "school": "Université Iba Der Thiam de Thiès", "start": "2023", "end": "2025", "details": "" }],
+      "skills": ["AutoCAD", "Métrés", "Excel"],
+      "languages": [{ "name": "Français", "level": "Courant" }, { "name": "Wolof", "level": "Langue maternelle" }, { "name": "Anglais", "level": "Notions (A2)" }],
+      "projects": [], "certifications": []
+    }
+  }
+]

@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-19T07:29:31.362Z",
+  "date": "2026-10-19T13:32:19.350Z",
   "provider": "claude",
   "models": {
     "gemini": "gemini-3.6-flash",
@@ -30,6 +30,10 @@
     "oral": [
       20,
       20
+    ],
+    "study": [
+      35,
+      35
     ]
   },
   "results": [
@@ -349,6 +353,122 @@
           "name": "débit calculé (20 s de parole)",
           "ok": true,
           "detail": "135 mots/min"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "cm-anglophone-sop-data-science",
+      "ms": 30185,
+      "checks": [
+        {
+          "task": "study",
+          "name": "statement : 500 à 1 000 mots",
+          "ok": true,
+          "detail": "730 mots"
+        },
+        {
+          "task": "study",
+          "name": "ni formule d’appel ni signature",
+          "ok": true,
+          "detail": "My interest in data science started with"
+        },
+        {
+          "task": "study",
+          "name": "établissement ou formation cités",
+          "ok": true,
+          "detail": "University of Edinburgh"
+        },
+        {
+          "task": "study",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "rédigé en anglais",
+          "ok": true,
+          "detail": "My interest in data science started with"
+        },
+        {
+          "task": "study",
+          "name": "aucun cliché de candidature",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "au plus 5 repères à compléter",
+          "ok": true,
+          "detail": "4 repère(s)"
+        },
+        {
+          "task": "study",
+          "name": "jury : question sur le projet d’études",
+          "ok": true,
+          "detail": "Thank you for coming, Emmanuel. Could you briefly introduce yourself and explain how your BSc in Computer Science at Bue"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "cm-campusfrance-master-finance",
+      "ms": 16609,
+      "checks": [
+        {
+          "task": "study",
+          "name": "au plus 1500 caractères",
+          "ok": true,
+          "detail": "1181 caractères"
+        },
+        {
+          "task": "study",
+          "name": "ni formule d’appel ni signature",
+          "ok": true,
+          "detail": "Ma licence en économie et gestion à l'Un"
+        },
+        {
+          "task": "study",
+          "name": "établissement ou formation cités",
+          "ok": true,
+          "detail": "Université Paris-Dauphine"
+        },
+        {
+          "task": "study",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "rédigé en français",
+          "ok": true,
+          "detail": "Ma licence en économie et gestion à l'Un"
+        },
+        {
+          "task": "study",
+          "name": "aucun cliché de candidature",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "aucune formule creuse (NoTics)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "au plus 5 repères à compléter",
+          "ok": true,
+          "detail": "3 repère(s)"
+        },
+        {
+          "task": "study",
+          "name": "jury : question sur le projet d’études",
+          "ok": true,
+          "detail": "Bonjour Aïcha, merci de vous présenter. Pouvez-vous me retracer votre parcours, de votre licence à l'Université de Doual"
         }
       ],
       "score": 100
@@ -1169,6 +1289,67 @@
       "score": 100
     },
     {
+      "id": "fr-parcoursup-but-informatique",
+      "ms": 21750,
+      "checks": [
+        {
+          "task": "study",
+          "name": "au plus 1500 caractères",
+          "ok": true,
+          "detail": "1183 caractères"
+        },
+        {
+          "task": "study",
+          "name": "ni formule d’appel ni signature",
+          "ok": true,
+          "detail": "C'est en spécialité NSI que j'ai découve"
+        },
+        {
+          "task": "study",
+          "name": "établissement ou formation cités",
+          "ok": true,
+          "detail": "IUT de Lannion"
+        },
+        {
+          "task": "study",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "rédigé en français",
+          "ok": true,
+          "detail": "C'est en spécialité NSI que j'ai découve"
+        },
+        {
+          "task": "study",
+          "name": "aucun cliché de candidature",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "aucune formule creuse (NoTics)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "au plus 5 repères à compléter",
+          "ok": true,
+          "detail": "2 repère(s)"
+        },
+        {
+          "task": "study",
+          "name": "jury : question sur le projet d’études",
+          "ok": true,
+          "detail": "Bonjour Lucas, merci de vous être déplacé. Pour commencer, pouvez-vous vous présenter brièvement et m'expliquer ce qui v"
+        }
+      ],
+      "score": 100
+    },
+    {
       "id": "intl-software-engineer",
       "ms": 27633,
       "checks": [
@@ -1484,6 +1665,67 @@
           "name": "débit calculé (20 s de parole)",
           "ok": true,
           "detail": "129 mots/min"
+        }
+      ],
+      "score": 100
+    },
+    {
+      "id": "sn-lettre-ecole-ingenieurs",
+      "ms": 20486,
+      "checks": [
+        {
+          "task": "study",
+          "name": "lettre : 220 à 420 mots",
+          "ok": true,
+          "detail": "345 mots"
+        },
+        {
+          "task": "study",
+          "name": "formule d’appel présente",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nTitulaire d'un DUT e"
+        },
+        {
+          "task": "study",
+          "name": "établissement ou formation cités",
+          "ok": true,
+          "detail": "École supérieure polytechnique de Dakar"
+        },
+        {
+          "task": "study",
+          "name": "aucun chiffre inventé",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "rédigé en français",
+          "ok": true,
+          "detail": "\nMadame, Monsieur,\n\nTitulaire d'un DUT e"
+        },
+        {
+          "task": "study",
+          "name": "aucun cliché de candidature",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "aucune formule creuse (NoTics)",
+          "ok": true,
+          "detail": ""
+        },
+        {
+          "task": "study",
+          "name": "au plus 5 repères à compléter",
+          "ok": true,
+          "detail": "4 repère(s)"
+        },
+        {
+          "task": "study",
+          "name": "jury : question sur le projet d’études",
+          "ok": true,
+          "detail": "Bonjour Moussa, merci d'être là. Pouvez-vous vous présenter en quelques minutes : votre parcours depuis le DUT en génie "
         }
       ],
       "score": 100

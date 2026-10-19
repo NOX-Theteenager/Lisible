@@ -26,10 +26,10 @@ function Curve({ list }) {
   );
 }
 
-function Detail({ s }) {
+function Detail({ s, ui }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '10px' }}>
-      {s.oral ? <OralReport o={s.oral} /> : null}
+      {s.oral ? <OralReport o={s.oral} ui={ui} /> : null}
       {(s.items || []).map((it, i) => (
         <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={bubble(false)}><strong style={{ display: 'block', fontSize: '11px', color: 'var(--mu)', marginBottom: '2px' }}>Question {i + 1}</strong>{it.question}</div>
@@ -77,7 +77,7 @@ export default function InterviewHistory({ v }) {
               <Btn onClick={() => setOpen(open === s.id ? null : s.id)}>{open === s.id ? 'Replier' : 'Revoir'}</Btn>
               <Btn onClick={() => { if (open === s.id) setOpen(null); h.remove(s.id); }} style={{ color: 'var(--er)' }}>Supprimer</Btn>
             </div>
-            {open === s.id ? <Detail s={s} /> : null}
+            {open === s.id ? <Detail s={s} ui={v.mock && v.mock.ui} /> : null}
           </div>
         ))}
       </div>
