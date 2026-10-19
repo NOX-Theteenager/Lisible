@@ -113,6 +113,8 @@ Lancez-le après chaque changement de consigne ou de modèle (par exemple un nou
 
 - Pages légales : `/confidentialite`, `/conditions`, `/mentions-legales`. Éditeur : NGUETSA STEPHANE (Cameroun) ; données stockées à Francfort (Supabase eu-central-1).
 - `GEMINI_PAID_TIER=true` uniquement si la facturation est activée sur la clé Gemini : sur le palier gratuit, Google peut utiliser les contenus pour entraîner ses modèles. Tant que la valeur n'est pas `true`, toutes les demandes d'IA passent par Claude.
+- Entretien vocal (Gemini Live, modèle `GEMINI_LIVE_MODEL`, par défaut `gemini-3.8-live`) : proposé automatiquement quand `GEMINI_PAID_TIER=true`. `GEMINI_LIVE=true` l'active sans facturation (la voix et le CV passent alors par l'offre gratuite de Google), `GEMINI_LIVE=false` le coupe. Le navigateur se connecte à Gemini avec un jeton éphémère verrouillé créé par `/api/live/session` : la clé ne quitte jamais le serveur.
+- Fiche entreprise : recherche web (Google Search via Gemini, sinon recherche web de Claude). Seuls le nom de l'entreprise, le poste et l'offre sont envoyés, donc Gemini est utilisé même sans facturation.
 - Aucun service tiers n'est contacté au chargement : polices et bibliothèques (React, pdf.js, mammoth, docx, JSZip, Supabase) sont servies par le site.
 - En-têtes de sécurité (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) définis dans `vercel.json` et `server/security.js`.
 - Droit à l'effacement : Paramètres → « Supprimer mon compte et mes données » (fonction SQL `delete_my_account`). Portabilité : export JSON complet.
