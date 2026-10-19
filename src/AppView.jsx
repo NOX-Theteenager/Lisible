@@ -17,6 +17,7 @@ import MobileNav from './layout/MobileNav.jsx';
 import NavDrawer from './overlays/NavDrawer.jsx';
 import AuthScreen from './overlays/AuthScreen.jsx';
 import Toast from './overlays/Toast.jsx';
+import ExportProgress from './overlays/ExportProgress.jsx';
 
 /* Généré depuis le design Claude Design « CV ATS Pro v3 ». */
 export default function AppView({ v }) {
@@ -36,6 +37,7 @@ export default function AppView({ v }) {
       <MobileNav v={v} />
       <NavDrawer v={v} />
       <AuthScreen v={v} />
+      <ExportProgress v={v} />
       <Toast v={v} />
     </>
   );

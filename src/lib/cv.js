@@ -38,7 +38,7 @@ export function docModel(cv, font, size) {
             ? cv.experiences
                 .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
                 .flatMap((e) => [
-                  { type: 'bold', text: e.role + (e.company ? ' — ' + e.company : '') },
+                  { type: 'bold', text: e.role + (e.company ? ', ' + e.company : '') },
                   { type: 'p', text: [e.city, dates(e)].filter(Boolean).join(' | ') },
                   ...e.bullets.filter((b) => b.trim()).map((b) => ({ type: 'bullet', text: b.trim() })),
                 ])
@@ -94,7 +94,21 @@ export const contactLine = (cv) => {
   const c = cv.contact;
   return [c.city, c.phone, c.email, c.linkedin, c.github].filter((x) => x && x.trim()).join(' | ');
 };
-export const dates = (e) => [e.start, e.end].filter(Boolean).join(' – ');
+export const dates = (e) => [e.start, e.end].filter(Boolean).join(' - ');
+/* Aucun tiret cadratin dans le CV : entre deux dates ou nombres il devient un trait d'union,
+   entre deux mots une virgule ; en début de ligne il disparaît. */
+export const noDash = (t) =>
+  String(t)
+    .replace(/(\d)\s*[—–]\s*(?=\d|aujourd|présent|present|now|today)/gi, '$1 - ')
+    .replace(/^\s*[—–]\s*/gm, '')
+    .replace(/\s+[—–]\s+/g, ', ')
+    .replace(/\s*—\s*/g, ', ');
+export function dashFree(x) {
+  if (typeof x === 'string') return /[—–]/.test(x) && !x.startsWith('data:') ? noDash(x) : x;
+  if (Array.isArray(x)) return x.map(dashFree);
+  if (x && typeof x === 'object') { const o = {}; for (const k in x) o[k] = dashFree(x[k]); return o; }
+  return x;
+}
 export function secText(cv, k) {
   switch (k) {
     case 'summary':
@@ -103,7 +117,7 @@ export function secText(cv, k) {
       return cv.experiences
         .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .flatMap((e) => [
-          e.role + (e.company ? ' — ' + e.company : ''),
+          e.role + (e.company ? ', ' + e.company : ''),
           [e.city, dates(e)].filter(Boolean).join(' | '),
           ...e.bullets.filter((b) => b.trim()).map((b) => '- ' + b.trim()),
         ]);
@@ -123,9 +137,9 @@ export function secText(cv, k) {
           ]
         : [];
     case 'projects':
-      return cv.projects.filter((p) => p.name).map((p) => p.name + ' — ' + p.desc + (p.link ? ' (' + p.link + ')' : ''));
+      return cv.projects.filter((p) => p.name).map((p) => p.name + (p.desc ? ' : ' + p.desc : '') + (p.link ? ' (' + p.link + ')' : ''));
     case 'certifications':
-      return cv.certifications.filter((c) => c.name).map((c) => [c.name, c.issuer, c.date].filter(Boolean).join(' — '));
+      return cv.certifications.filter((c) => c.name).map((c) => [c.name, c.issuer, c.date].filter(Boolean).join(', '));
   }
   return [];
 }
@@ -152,7 +166,7 @@ export function docHtml(cv, tpl) {
       cv.experiences
         .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .forEach((e) => {
-          h += `<p><b>${esc(e.role)}${e.company ? ' — ' + esc(e.company) : ''}</b></p><p>${esc([e.city, dates(e)].filter(Boolean).join(' | '))}</p><ul>${e.bullets
+          h += `<p><b>${esc(e.role)}${e.company ? ', ' + esc(e.company) : ''}</b></p><p>${esc([e.city, dates(e)].filter(Boolean).join(' | '))}</p><ul>${e.bullets
             .filter((b) => b.trim())
             .map((b) => '<li>' + esc(b) + '</li>')
             .join('')}</ul>`;

@@ -19,3 +19,4 @@ html{-webkit-text-size-adjust:100%}
 html[data-contrast="high"][data-theme="dark"]{--mu:#d6cfc2;--fa:#b3ab9e;--line:#4a443c;--line2:#6a6258}
 
 html,body,#root{min-height:100%}
+@keyframes lisible-spin{to{transform:rotate(360deg)}}

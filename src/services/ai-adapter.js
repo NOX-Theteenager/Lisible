@@ -9,7 +9,15 @@
   const api = () => window.LisibleAPI;
   const uid = () => Math.random().toString(36).slice(2, 9);
   const ORDER = ['summary', 'experience', 'education', 'skills', 'languages', 'projects', 'certifications'];
-  const s = (v) => (v == null ? '' : String(v));
+  // Pas de tiret cadratin dans les CV renvoyés par l'IA (même règle que noDash dans lib/cv.js).
+  const s = (v) =>
+    v == null
+      ? ''
+      : String(v)
+          .replace(/(\d)\s*[—–]\s*(?=\d|aujourd|présent|present|now|today)/gi, '$1 - ')
+          .replace(/^\s*[—–]\s*/gm, '')
+          .replace(/\s+[—–]\s+/g, ', ')
+          .replace(/\s*—\s*/g, ', ');
 
   /* Remet un CV renvoyé par l'IA dans la forme exacte attendue par l'éditeur. */
   function normalizeCv(raw, base) {

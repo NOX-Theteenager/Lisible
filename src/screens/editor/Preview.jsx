@@ -623,7 +623,7 @@ export default function Preview({ v }) {
                                   <React.Fragment key={i30}>
                                     <div style={{ fontSize: '11.5px' }}>
                                       <strong>{li?.name}</strong>
-                                      {' — '}
+                                      {' : '}
                                       {li?.level}
                                     </div>
                                   </React.Fragment>
@@ -797,7 +797,7 @@ export default function Preview({ v }) {
                                   <React.Fragment key={i36}>
                                     <p style={{ margin: '0 0 4px' }}>
                                       <strong>{x?.name}</strong>
-                                      {' — '}
+                                      {' : '}
                                       {x?.desc} {x?.link}
                                     </p>
                                   </React.Fragment>

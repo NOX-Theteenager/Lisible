@@ -67,11 +67,11 @@ export default function Versions({ v }) {
                   {'+ Nouvelle version vierge'}
                 </button>{' '}
               </div>{' '}
-              {(v.vers || []).map((v, i69) => (
+              {(v.vers || []).map((ver, i69) => (
                 <React.Fragment key={i69}>
                   {' '}
                   <div
-                    onClick={v?.select}
+                    onClick={ver?.select}
                     style={{
                       display: 'flex',
                       flexWrap: 'wrap',
@@ -79,15 +79,15 @@ export default function Versions({ v }) {
                       gap: '12px',
                       padding: '10px 14px',
                       borderBottom: '1px solid var(--line)',
-                      background: v?.bg,
-                      boxShadow: `inset 3px 0 0 ${v?.mark ?? ''}`,
+                      background: ver?.bg,
+                      boxShadow: `inset 3px 0 0 ${ver?.mark ?? ''}`,
                       cursor: 'pointer',
                     }}
                   >
                     {' '}
                     <div style={{ flex: '1 1 100%', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                       {' '}
-                      {v?.renaming ? (
+                      {ver?.renaming ? (
                         <>
                           {' '}
                           <input
@@ -110,16 +110,16 @@ export default function Versions({ v }) {
                           />{' '}
                         </>
                       ) : null}{' '}
-                      {v?.notRenaming ? (
+                      {ver?.notRenaming ? (
                         <>
-                          <span style={{ fontWeight: '500' }}>{v?.name}</span>
+                          <span style={{ fontWeight: '500' }}>{ver?.name}</span>
                         </>
                       ) : null}{' '}
                       <span style={{ fontSize: '11.5px', color: 'var(--fa)' }}>
                         {'modifiée '}
-                        {v?.updated}
+                        {ver?.updated}
                         {' · '}
-                        {v?.histCount}
+                        {ver?.histCount}
                         {' instantanés'}
                       </span>{' '}
                     </div>{' '}
@@ -129,11 +129,11 @@ export default function Versions({ v }) {
                         fontWeight: '500',
                         padding: '2px 8px',
                         borderRadius: '4px',
-                        background: v?.tagBg,
-                        color: v?.tagFg,
+                        background: ver?.tagBg,
+                        color: ver?.tagFg,
                       }}
                     >
-                      {v?.tag}
+                      {ver?.tag}
                     </span>{' '}
                     <span
                       style={{
@@ -142,15 +142,15 @@ export default function Versions({ v }) {
                         fontFamily: "'JetBrains Mono',monospace",
                         fontSize: '12.5px',
                         fontWeight: '500',
-                        color: v?.color,
+                        color: ver?.color,
                       }}
                     >
-                      {v?.score}
+                      {ver?.score}
                     </span>{' '}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginLeft: 'auto' }}>
                       {' '}
                       <button
-                        onClick={v?.open}
+                        onClick={ver?.open}
                         style={{
                           height: '26px',
                           padding: '0 8px',
@@ -169,7 +169,7 @@ export default function Versions({ v }) {
                         {'Ouvrir'}
                       </button>{' '}
                       <button
-                        onClick={v?.rename}
+                        onClick={ver?.rename}
                         style={{
                           height: '26px',
                           padding: '0 8px',
@@ -187,7 +187,7 @@ export default function Versions({ v }) {
                         {'Renommer'}
                       </button>{' '}
                       <button
-                        onClick={v?.dup}
+                        onClick={ver?.dup}
                         style={{
                           height: '26px',
                           padding: '0 8px',
@@ -205,7 +205,7 @@ export default function Versions({ v }) {
                         {'Dupliquer'}
                       </button>{' '}
                       <button
-                        onClick={v?.del}
+                        onClick={ver?.del}
                         style={{
                           height: '26px',
                           padding: '0 8px',
@@ -276,9 +276,9 @@ export default function Versions({ v }) {
                 </button>{' '}
               </div>{' '}
               {(v.hist || []).map((h, i70) => (
-                <React.Fragment key={i70}>
+                <React.Fragment key={h.key || i70}>
                   {' '}
-                  <div style={{ display: 'flex', gap: '10px', padding: '10px 14px', borderBottom: '1px solid var(--line)' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 10px', padding: '10px 14px', borderBottom: '1px solid var(--line)' }}>
                     {' '}
                     <span
                       style={{
@@ -290,15 +290,33 @@ export default function Versions({ v }) {
                         flex: '0 0 8px',
                       }}
                     ></span>{' '}
-                    <div style={{ flex: '1', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{ flex: '1 1 160px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {' '}
-                      <span style={{ fontWeight: '500' }}>{h?.label}</span>{' '}
+                      {h.renaming ? (
+                        <input
+                          autoFocus
+                          aria-label="Nom de l’instantané"
+                          value={h.renameText}
+                          onChange={h.onRenameText}
+                          onKeyDown={h.onRenameKey}
+                          onBlur={h.commitRename}
+                          style={{ height: '28px', padding: '0 10px', border: '1px solid var(--ai)', borderRadius: '8px', background: 'var(--panel)', color: 'var(--tx)', font: 'inherit', fontSize: '13px', outline: 'none', minWidth: 0 }}
+                        />
+                      ) : (
+                        <span style={{ fontWeight: '500' }}>{h?.label}</span>
+                      )}{' '}
                       <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: '11px', color: 'var(--fa)' }}>
                         {h?.when}
                         {' · score '}
                         {h?.score}
                       </span>{' '}
                     </div>{' '}
+                    <button onClick={h.rename} aria-label="Renommer l’instantané" style={{ alignSelf: 'center', height: '26px', padding: '0 8px', border: '1px solid var(--line2)', borderRadius: '999px', background: 'var(--panel)', color: 'var(--tx)', font: 'inherit', fontSize: '11.5px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: '0' }}>
+                      {'Renommer'}
+                    </button>{' '}
+                    <button onClick={h.del} style={{ ...{ alignSelf: 'center', height: '26px', padding: '0 8px', border: '1px solid var(--line2)', borderRadius: '999px', background: 'var(--panel)', color: 'var(--tx)', font: 'inherit', fontSize: '11.5px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: '0' }, color: 'var(--er)', borderColor: h.confirmDel ? 'var(--er)' : 'var(--line2)', background: h.confirmDel ? 'var(--ers)' : 'var(--panel)' }}>
+                      {h.confirmDel ? 'Confirmer ?' : 'Supprimer'}
+                    </button>{' '}
                     <button
                       onClick={h?.restore}
                       style={{

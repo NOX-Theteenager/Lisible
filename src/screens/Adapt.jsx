@@ -112,42 +112,6 @@ export default function Adapt({ v }) {
                             }}
                             className={ps('focus', 'border-color:var(--ai);box-shadow:0 0 0 4px var(--ais)')}
                           />{' '}
-                          <button
-                            onClick={v.adH?.runLink}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              height: '38px',
-                              padding: '0 18px 0 8px',
-                              border: '0',
-                              borderRadius: '999px',
-                              background: 'var(--ai)',
-                              color: 'var(--aifg)',
-                              font: 'inherit',
-                              fontSize: '13px',
-                              fontWeight: '700',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                              flexShrink: '0',
-                              transition: 'transform .15s',
-                            }}
-                            className={ps('hover', 'transform:translateY(-1px)')}
-                          >
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                fontWeight: '800',
-                                padding: '3px 7px',
-                                borderRadius: '999px',
-                                background: 'rgba(255,255,255,.22)',
-                                letterSpacing: '.05em',
-                              }}
-                            >
-                              {'IA'}
-                            </span>
-                            {'Analyser la page'}
-                          </button>{' '}
                         </div>{' '}
                         <span style={{ fontSize: '12px', color: 'var(--mu)' }}>
                           {v.jobSites}

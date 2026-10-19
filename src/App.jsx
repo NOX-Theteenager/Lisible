@@ -11,6 +11,7 @@ import {
   anonCv,
   blankVersion,
   contactLine,
+  dashFree,
   cvText,
   dates,
   docHtml,
@@ -156,8 +157,12 @@ export default class App extends React.Component {
       briefBusy: false,
       exp: { open: false, fmt: 'docx', name: '' },
       toast: '',
+      exporting: null,
       renaming: null,
       renameText: '',
+      hRen: null,
+      hRenText: '',
+      hDel: null,
       histSel: null,
     };
   }
@@ -530,6 +535,26 @@ export default class App extends React.Component {
     if (key !== this._ctxKey && window.LisibleAPI) { this._ctxKey = key; window.LisibleAPI.setContext(ctx); }
   }
   /* Télécharge un PDF texte généré par le serveur ; renvoie false si le service est indisponible. */
+  /* Exporte en affichant une barre de progression. La durée réelle étant inconnue, la barre avance
+     de plus en plus lentement vers 90 %, puis passe à 100 % à la fin. fn renvoie true si le fichier est prêt. */
+  async runExport(label, file, fn) {
+    clearInterval(this._expI);
+    clearTimeout(this._expT);
+    this.setState({ exporting: { label, detail: file, pct: 4, state: 'run' } });
+    this._expI = setInterval(() => {
+      this.setState((st) => (st.exporting && st.exporting.state === 'run' ? { exporting: { ...st.exporting, pct: st.exporting.pct + (90 - st.exporting.pct) * 0.07 } } : null));
+    }, 200);
+    let ok = false;
+    try {
+      ok = await fn();
+    } catch (e) {
+      console.warn(e);
+    }
+    clearInterval(this._expI);
+    this.setState({ exporting: ok ? { label: 'Export terminé', detail: file, pct: 100, state: 'done' } : { label: 'Export impossible', detail: 'Une autre méthode prend le relais', pct: 100, state: 'error' } });
+    this._expT = setTimeout(() => this.setState({ exporting: null }), ok ? 2800 : 4000);
+    return ok;
+  }
   async pdfDownload(html, name) {
     try {
       const blob = await window.LisibleAPI.pdf(html, name);
@@ -707,7 +732,7 @@ export default class App extends React.Component {
   exportNow() {
     const s = this.state,
       v = this.cur(),
-      cv = s.anon ? anonCv(v.cv) : v.cv,
+      cv = dashFree(s.anon ? anonCv(v.cv) : v.cv),
       tpl = applyFont(resolveTpl(s.tpl, s.accent), s.font);
     {
       const p = findPh(v.cv);
@@ -721,9 +746,14 @@ export default class App extends React.Component {
       this.download(base + '.txt', cvText(cv), 'text/plain;charset=utf-8');
     } else if (s.exp.fmt === 'docx') {
       if (window.CVExport) {
-        window.CVExport.docxBlob(docModel(cv, tpl.isDesign && !s.font ? 'Arial' : tpl.fontName, s.fsize))
-          .then((b) => window.CVExport.save(base + '.docx', b))
-          .catch(() => this.download(base + '.doc', '\ufeff' + docHtml(cv, tpl), 'application/msword'));
+        this.runExport('Création du fichier Word…', base + '.docx', () =>
+          window.CVExport.docxBlob(docModel(cv, tpl.isDesign && !s.font ? 'Arial' : tpl.fontName, s.fsize)).then((b) => {
+            window.CVExport.save(base + '.docx', b);
+            return true;
+          }),
+        ).then((ok) => {
+          if (!ok) this.download(base + '.doc', '\ufeff' + docHtml(cv, tpl), 'application/msword');
+        });
       } else this.download(base + '.doc', '\ufeff' + docHtml(cv, tpl), 'application/msword');
     } else {
       const node = this.paperRef.current;
@@ -732,22 +762,34 @@ export default class App extends React.Component {
         const c = node.cloneNode(true);
         c.querySelectorAll('[style*="dashed"]').forEach((e) => { if (/position:\s*absolute/.test(e.getAttribute('style') || '')) e.remove(); });
         c.querySelectorAll('label').forEach((e) => { if (e.querySelector('input[type=file]')) e.remove(); });
-        c.style.zoom = '';
+        // La feuille d'aperçu fait 760 px de large (1075 px par page) ; une page A4 en fait 793,7 × 1122,5
+        // à 96 ppp. On agrandit donc la copie à la largeur exacte du A4 et on l'étire sur un nombre
+        // entier de pages, pour que fonds et colonnes colorées couvrent toute la feuille.
+        const h760 = node.offsetWidth ? (node.offsetHeight * 760) / node.offsetWidth : 1075;
+        const pages = Math.max(1, Math.ceil((h760 - 4) / 1075));
+        c.style.zoom = String(793.7 / 760);
+        c.style.width = '760px';
+        // 1074,8 px et non 1075 : une fois agrandie, chaque page tient dans les 1122,5 px du A4 sans créer de page vide.
+        c.style.minHeight = pages * 1074.8 + 'px';
+        c.style.height = pages * 1074.8 + 'px';
+        // Le corps (une ou deux colonnes) s'étire jusqu'en bas de la dernière page : la colonne colorée descend jusqu'au bord.
+        c.style.display = 'flex';
+        c.style.flexDirection = 'column';
+        const grid = c.querySelector(':scope > div[style*="grid-template-columns"]');
+        if (grid) grid.style.flex = '1 0 auto';
         c.style.border = '0';
         c.style.borderRadius = '0';
         c.style.boxShadow = 'none';
         html = '<html><head><meta charset="utf-8"><style>@page{size:A4;margin:0}body{margin:0}</style></head><body>' + c.outerHTML.replace(/rgba\(232, 72, 28, 0\.07\)/g, 'transparent') + '</body></html>';
       } else html = docHtml(cv, tpl).replace('margin:2cm', 'margin:0').replace('</head>', '<style>@page{size:A4;margin:2cm}</style></head>');
       this.setState((st) => ({ exp: { ...st.exp, open: false } }));
-      this.toast('Génération du PDF…');
-      this.pdfDownload(html, base).then((ok) => {
-        if (ok) this.toast('PDF téléchargé' + (s.anon ? ' (anonymisé)' : ''));
-        else { this.printHtml(html); this.toast('Service PDF indisponible : choisissez « Enregistrer au format PDF » dans la fenêtre d’impression'); }
+      this.runExport('Création du PDF…', base + '.pdf' + (s.anon ? ' (anonymisé)' : ''), () => this.pdfDownload(html, base)).then((ok) => {
+        if (!ok) { this.printHtml(html); this.toast('Service PDF indisponible : choisissez « Enregistrer au format PDF » dans la fenêtre d’impression'); }
       });
       return;
     }
     this.setState((st) => ({ exp: { ...st.exp, open: false } }));
-    this.toast('Export ' + { docx: 'Word', pdf: 'PDF', txt: 'TXT' }[s.exp.fmt] + ' lancé' + (s.anon ? ' (anonymisé)' : ''));
+    if (s.exp.fmt === 'txt' || !window.CVExport) this.toast('Fichier ' + (s.exp.fmt === 'txt' ? 'TXT' : 'Word') + ' téléchargé' + (s.anon ? ' (anonymisé)' : ''));
   }
 
   pvBoxRef = React.createRef();
@@ -818,7 +860,7 @@ export default class App extends React.Component {
         : null;
       const iv = s.iv;
       const fiche = [
-        'FICHE ENTRETIEN — ' + L.company + ' · ' + L.role,
+        'FICHE ENTRETIEN : ' + L.company + ' · ' + L.role,
         '',
         'PITCH (30 s)',
         iv.pitch || '(à générer dans l’onglet Entretien)',
@@ -897,7 +939,7 @@ export default class App extends React.Component {
         from = payload.name + (f.pages ? ' · ' + f.pages + ' page' + (f.pages > 1 ? 's' : '') : '');
       }
       const info = {
-        title: [o.role, o.company].filter(Boolean).join(' — ') || 'Annonce extraite',
+        title: [o.role, o.company].filter(Boolean).join(', ') || 'Annonce extraite',
         detail:
           from +
           ' · ' +
@@ -907,13 +949,15 @@ export default class App extends React.Component {
       };
       const extra =
         key === 'ad'
-          ? { offer: o.text, meta: o }
+          ? { offer: o.text, meta: o, fetchedUrl: kind === 'link' ? payload : '' }
           : { company: o.company || this.state.letter.company, role: o.role || this.state.letter.role, offerText: o.text };
       upd({ srcPhase: 'done', busyPct: 100, info, ...extra });
       this.toast('Offre analysée par l’IA');
+      return true;
     } catch (e) {
       upd({ srcPhase: 'idle', busyPct: 0 });
       this.toast(errMsg(e));
+      return false;
     }
   }
   async letterAction() {
@@ -1016,7 +1060,7 @@ export default class App extends React.Component {
       v = this.cur(),
       cv = v.cv,
       tpl = applyFont(resolveTpl(s.tpl, s.accent), s.font),
-      view = s.anon ? anonCv(cv) : cv;
+      view = dashFree(s.anon ? anonCv(cv) : cv);
     const clean = (t) => NT().autoFix(t || '').text,
       auto = s.prefs.autoClean !== false;
     const blurClean = (val, set) => {
@@ -1371,7 +1415,7 @@ export default class App extends React.Component {
       exps: view.experiences
         .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
         .map((e) => ({
-          head: e.role + (e.company ? ' — ' + e.company : ''),
+          head: e.role + (e.company ? ', ' + e.company : ''),
           meta: [e.city, dates(e)].filter(Boolean).join(' | '),
           bullets: e.bullets.filter((b) => b.trim()).map((t) => ({ text: t })),
         })),
@@ -1389,12 +1433,12 @@ export default class App extends React.Component {
         .map((l) => l.name + ' : ' + l.level)
         .join(' ; '),
       projs: view.projects.filter((p) => p.name).map((p) => ({ name: p.name, desc: p.desc, link: p.link ? '(' + p.link + ')' : '' })),
-      certs: view.certifications.filter((c) => c.name).map((c) => ({ line: [c.name, c.issuer, c.date].filter(Boolean).join(' — ') })),
+      certs: view.certifications.filter((c) => c.name).map((c) => ({ line: [c.name, c.issuer, c.date].filter(Boolean).join(', ') })),
     };
     pv.exps = view.experiences
       .filter((e) => e.role || e.company || (e.bullets || []).some((b) => b.trim()))
       .map((e) => ({
-        head: e.role + (e.company ? ' — ' + e.company : ''),
+        head: e.role + (e.company ? ', ' + e.company : ''),
         meta: [e.city, dates(e)].filter(Boolean).join(' | '),
         role: e.role,
         sub: [e.company, e.city].filter(Boolean).join(', '),
@@ -1619,7 +1663,39 @@ export default class App extends React.Component {
         this.setState((st) => ({ versions: st.versions.map((y) => (y.id === st.renaming ? { ...y, name: t } : y)), renaming: null }));
       else this.setState({ renaming: null });
     };
+    // Instantanés : renommer ou supprimer (la suppression demande un second clic pour confirmer).
+    const hKey = (h) => h.id || String(h.t);
+    const setHist = (fn) =>
+      this.setState((st) => ({ versions: st.versions.map((y) => (y.id === sel.id ? { ...y, history: fn(y.history) } : y)) }));
+    const commitHRen = () => {
+      const t = this.state.hRenText.trim(),
+        k = this.state.hRen;
+      if (k && t) setHist((H) => H.map((x) => (hKey(x) === k ? { ...x, label: t } : x)));
+      this.setState({ hRen: null });
+    };
     const hist = sel.history.map((h) => ({
+      key: hKey(h),
+      renaming: s.hRen === hKey(h),
+      renameText: s.hRenText,
+      onRenameText: (ev) => this.setState({ hRenText: ev.target.value }),
+      onRenameKey: (ev) => {
+        if (ev.key === 'Enter') commitHRen();
+        if (ev.key === 'Escape') this.setState({ hRen: null });
+      },
+      commitRename: commitHRen,
+      rename: () => this.setState({ hRen: hKey(h), hRenText: h.label, hDel: null }),
+      confirmDel: s.hDel === hKey(h),
+      del: () => {
+        if (s.hDel !== hKey(h)) {
+          this.setState({ hDel: hKey(h) });
+          clearTimeout(this._hDelT);
+          this._hDelT = setTimeout(() => this.setState({ hDel: null }), 4000);
+          return;
+        }
+        setHist((H) => H.filter((x) => hKey(x) !== hKey(h)));
+        this.setState({ hDel: null });
+        this.toast('Instantané supprimé');
+      },
       label: h.label,
       when: rel(h.t),
       score: analyze(h.cv, tpl).score,
@@ -1990,10 +2066,9 @@ export default class App extends React.Component {
         if (!s.letter.text.trim() || s.pdfBusy) return;
         const html = this.letterHtml(), name = 'Lettre_' + (slug(s.letter.company) || 'motivation');
         this.setState({ pdfBusy: true });
-        this.pdfDownload(html, name).then((ok) => {
+        this.runExport('Création du PDF de la lettre…', name + '.pdf', () => this.pdfDownload(html, name)).then((ok) => {
           this.setState({ pdfBusy: false });
-          if (ok) this.toast('Lettre exportée (PDF)');
-          else { this.printHtml(html); this.toast('Service PDF indisponible : utilisez « Enregistrer au format PDF »'); }
+          if (!ok) { this.printHtml(html); this.toast('Service PDF indisponible : utilisez « Enregistrer au format PDF »'); }
         });
       },
       brief: {
@@ -2341,7 +2416,7 @@ export default class App extends React.Component {
       openImported: () => {
         if (!IR) return;
         this.addVersion(
-          ip.mode === 'simple' ? 'CV — Conforme ATS' : 'CV importé — ' + (IR.cv.contact.name || 'conforme'),
+          ip.mode === 'simple' ? 'CV conforme ATS' : 'CV importé : ' + (IR.cv.contact.name || 'conforme'),
           'Importé',
           clone(IR.cv),
           'Import de ' + (ip.file ? ip.file.name : 'fichier') + ' et conversion',
@@ -2351,7 +2426,7 @@ export default class App extends React.Component {
       },
       exportImported: () => {
         if (!IR) return;
-        this.addVersion('CV importé — ' + (IR.cv.contact.name || 'conforme'), 'Importé', clone(IR.cv), 'Import et conversion');
+        this.addVersion('CV importé : ' + (IR.cv.contact.name || 'conforme'), 'Importé', clone(IR.cv), 'Import et conversion');
         this.setState((st) => ({ exp: { ...st.exp, open: true, name: 'CV_importe_conforme' } }));
       },
       offer: A.offer,
@@ -2365,14 +2440,20 @@ export default class App extends React.Component {
         ev.target.value = '';
         if (f) this.runSrc('ad', 'pdf', f);
       },
-      analyzeOffer: () => {
-        if (A.phase === 'busy') return;
-        if (!A.offer.trim()) {
-          this.toast("Collez d'abord le texte de l'offre");
+      analyzeOffer: async () => {
+        if (A.phase === 'busy' || A.srcPhase === 'busy') return;
+        // Avec un lien : un seul bouton, qui lit d'abord la page (si ce lien n'a pas encore été lu), puis analyse l'offre.
+        const url = (A.url || '').trim();
+        if (A.src === 'link' && url && (A.fetchedUrl !== url || !A.offer.trim())) {
+          if (!(await this.runSrc('ad', 'link', url))) return;
+        }
+        const offer = this.state.ad.offer;
+        if (!offer.trim()) {
+          this.toast(A.src === 'link' ? 'Collez d’abord un lien' : "Collez d'abord le texte de l'offre");
           return;
         }
         this.setState((st) => ({ ad: { ...st.ad, phase: 'busy' } }));
-        window.CVAI.analyzeOffer(cv, A.offer)
+        window.CVAI.analyzeOffer(cv, offer)
           .then((an) => {
             const acc = {},
               sk = {};
@@ -2398,7 +2479,7 @@ export default class App extends React.Component {
       ad: {
         input: A.phase !== 'result',
         result: A.phase === 'result',
-        btn: A.phase === 'busy' ? 'Analyse en cours…' : "Analyser l'offre",
+        btn: A.srcPhase === 'busy' ? 'Lecture de la page…' : A.phase === 'busy' ? 'Analyse en cours…' : "Analyser l'offre",
         before: AN ? mB.score : '—',
         after: mA.score,
         ats: analyze(applied, tpl).score,
@@ -2413,7 +2494,7 @@ export default class App extends React.Component {
         if (!AN) return;
         const co = AN.company || 'offre ciblée';
         const nid = this.addVersion(
-          'CV — ' + co + (AN.role ? ' (' + AN.role + ')' : ''),
+          'CV ' + co + (AN.role ? ' (' + AN.role + ')' : ''),
           'Ciblé',
           applyAdapt(cv, A.acc, A.sk, RW),
           'Adaptation à l’offre ' + co,
@@ -2806,7 +2887,7 @@ export default class App extends React.Component {
         if (s.trBusy) return;
         window.CVAI.translateCv(cv, 'en')
           .then((c) => {
-            this.addVersion(v.name + ' — English', 'Ciblé', c, 'Traduction anglaise');
+            this.addVersion(v.name + ' (English)', 'Ciblé', c, 'Traduction anglaise');
             this.setState({ trBusy: false });
             this.go('editor', { step: 0 });
             this.toast('Version anglaise créée');
@@ -3416,6 +3497,7 @@ export default class App extends React.Component {
           },
         };
       })(),
+      exporting: s.exporting,
       hasToast: !!s.toast,
       toast: s.toast,
       stepNum: stepIdx + 1,
@@ -3470,7 +3552,7 @@ export default class App extends React.Component {
           ['pdf', 'PDF'],
         ]),
         showText: A.src === 'text' || A.srcPhase === 'done',
-        textLabel: A.src === 'text' ? 'Texte de l’offre' : 'Texte extrait par l’IA — vérifiez avant l’analyse',
+        textLabel: A.src === 'text' ? 'Texte de l’offre' : 'Texte extrait par l’IA : vérifiez-le avant l’analyse',
       },
       adH: srcH('ad'),
       letSrc: srcVals('letter', [

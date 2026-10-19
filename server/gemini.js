@@ -12,7 +12,7 @@ function ai() {
 /* Consigne commune à toutes les réécritures (reprise du prototype). */
 export const STYLE = `Écris en français naturel (ou dans la langue demandée), voix active, phrases de longueur variée.
 Aucun cliché ni formule creuse (« passionné », « dynamique », « force de proposition », « valeur ajoutée », « dans un monde en constante évolution », « il est important de noter », etc.).
-Aucun tiret cadratin pour rythmer, pas de question rhétorique, pas d'énumération systématique par trois.
+Aucun tiret cadratin (—) ni demi-cadratin (–) dans le texte, pas de question rhétorique, pas d'énumération systématique par trois.
 N'invente JAMAIS un chiffre, une entreprise, un outil ou un résultat : utilise uniquement les faits fournis. Si une donnée manque, laisse un repère entre crochets comme [X %] ou [nombre d'utilisateurs].`;
 
 /* Délai maximal accordé à Gemini avant de basculer sur Claude. */
