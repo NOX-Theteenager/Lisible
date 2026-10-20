@@ -1,7 +1,8 @@
 /* Objectif : trouver un emploi ou candidater à une formation. Le mode Études adapte la lettre (projet
-   d'études, statement of purpose…), l'entretien (jury d'admission, Campus France) et le CV (format académique). */
+   d'études, statement of purpose…), l'entretien (jury d'admission, Campus France) et le format du CV,
+   qui suit automatiquement l'objectif choisi. */
 import React from 'react';
-import { Card, H, Muted, Btn } from './ui.jsx';
+import { Card, H, Muted } from './ui.jsx';
 
 const TRACKS = [
   ['job', 'Emploi', 'Postes, stages et alternances : CV pour les ATS, lettres, entretiens d’embauche.'],
@@ -30,16 +31,11 @@ export default function TrackCard({ v }) {
           );
         })}
       </div>
-      {v.study ? (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', padding: '12px 14px', borderRadius: '12px', background: 'var(--sub)' }}>
-          <span style={{ fontSize: '13px', flex: '1 1 260px' }}>
-            <strong>CV académique</strong> : formation en tête, « Projet d’études », « Projets et travaux académiques », « Distinctions ». S’applique à la version active.
-          </span>
-          <Btn kind={v.academicCv ? 'line' : 'ai'} onClick={() => v.setAcademicCv(!v.academicCv)}>
-            {v.academicCv ? 'Revenir au format professionnel' : 'Passer au format académique'}
-          </Btn>
-        </div>
-      ) : null}
+      <Muted>
+        {v.study
+          ? 'Vos CV sont au format académique : formation en tête, « Projet d’études », « Projets et travaux académiques », « Distinctions ».'
+          : 'Vos CV sont au format professionnel : expériences en tête, « Résumé professionnel ».'}
+      </Muted>
       {v.study ? (
         <Muted>
           Lisible vous aide à exprimer votre propre projet à partir de vos faits. Relisez et personnalisez chaque texte : les établissements attendent un travail personnel, et certains utilisent des outils de détection.

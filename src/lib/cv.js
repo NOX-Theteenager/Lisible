@@ -24,6 +24,14 @@ export const LABELS_EN = {
 /* CV académique (mode Études) : mêmes sections, intitulés adaptés aux candidatures à une formation. */
 export const LABELS_AC = { ...LABELS, summary: 'Projet d’études', experience: 'Stages et expériences', projects: 'Projets et travaux académiques', certifications: 'Distinctions et certifications' };
 export const LABELS_AC_EN = { ...LABELS_EN, summary: 'Academic Profile', experience: 'Internships and Experience', projects: 'Academic Projects and Research', certifications: 'Honours and Certifications' };
+/* Le format du CV suit l'objectif : académique en mode Études, professionnel en mode Emploi. */
+export const ORDER_AC = ['summary', 'education', 'projects', 'experience', 'skills', 'languages', 'certifications'];
+export const ORDER_JOB = ['summary', 'experience', 'education', 'skills', 'languages', 'projects', 'certifications'];
+export const withTrack = (cv, track) => ({ ...cv, kind: track === 'study' ? 'academic' : '' });
+export function reorderFor(cv, track) {
+  const want = track === 'study' ? ORDER_AC : ORDER_JOB, cur = cv.order || want;
+  return { ...cv, kind: track === 'study' ? 'academic' : '', order: [...want.filter((k) => cur.includes(k)), ...cur.filter((k) => !want.includes(k))] };
+}
 export const labOf = (cv, k) => (cv && cv.kind === 'academic' ? (cv.lang === 'en' ? LABELS_AC_EN : LABELS_AC) : cv && cv.lang === 'en' ? LABELS_EN : LABELS)[k];
 export function docModel(cv, font, size) {
   return {

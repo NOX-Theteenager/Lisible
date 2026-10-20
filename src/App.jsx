@@ -13,6 +13,8 @@ import {
   blankVersion,
   contactLine,
   dashFree,
+  reorderFor,
+  withTrack,
   cvText,
   dates,
   docHtml,
@@ -667,9 +669,10 @@ export default class App extends React.Component {
       window.scrollTo(0, 0);
     } catch (e) {}
   }
-  addVersion(name, tag, cv, label) {
+  addVersion(name, tag, cv0, label) {
     const id = uid(),
-      t = Date.now();
+      t = Date.now(),
+      cv = reorderFor(cv0, this.state.track); // format de l'objectif en cours (académique ou professionnel)
     const v = { id, name, tag, updated: t, cv, history: [{ id: uid(), t, label, cv: clone(cv) }] };
     this.setState((s) => ({ versions: [v, ...s.versions], currentId: id }));
     return id;
@@ -739,7 +742,7 @@ export default class App extends React.Component {
   exportNow() {
     const s = this.state,
       v = this.cur(),
-      cv = dashFree(s.anon ? anonCv(v.cv) : v.cv),
+      cv = dashFree(withTrack(s.anon ? anonCv(v.cv) : v.cv, s.track)),
       tpl = applyFont(resolveTpl(s.tpl, s.accent), s.font);
     {
       const p = findPh(v.cv);
@@ -764,18 +767,37 @@ export default class App extends React.Component {
       } else this.download(base + '.doc', '\ufeff' + docHtml(cv, tpl), 'application/msword');
     } else {
       const node = this.paperRef.current;
+      // Le PDF reproduit l'aperçu, donc le modèle choisi : il faut que l'aperçu soit affiché. Depuis un
+      // autre écran (Accueil…) ou l'onglet Rédiger sur mobile, on l'affiche puis on relance l'export.
+      if (!node || !node.offsetWidth) {
+        if (this._expRetry) {
+          this._expRetry = false;
+          this.toast('Aperçu indisponible : ouvrez l’éditeur puis relancez l’export');
+          return;
+        }
+        this._expRetry = true;
+        this.setState((st) => ({ screen: 'editor', mTab: 'pv', exp: { ...st.exp, open: false } }), () => setTimeout(() => this.exportNow(), 450));
+        return;
+      }
+      this._expRetry = false;
       let html;
-      if (node && tpl.isDesign) {
-        const c = node.cloneNode(true);
+      const clean = (c) => {
         c.querySelectorAll('[style*="dashed"]').forEach((e) => { if (/position:\s*absolute/.test(e.getAttribute('style') || '')) e.remove(); });
         c.querySelectorAll('label').forEach((e) => { if (e.querySelector('input[type=file]')) e.remove(); });
+        c.style.zoom = String(793.7 / 760);
+        c.style.width = '760px';
+        c.style.border = '0';
+        c.style.borderRadius = '0';
+        c.style.boxShadow = 'none';
+        return c;
+      };
+      if (tpl.isDesign) {
+        const c = clean(node.cloneNode(true));
         // La feuille d'aperçu fait 760 px de large (1075 px par page) ; une page A4 en fait 793,7 × 1122,5
         // à 96 ppp. On agrandit donc la copie à la largeur exacte du A4 et on l'étire sur un nombre
         // entier de pages, pour que fonds et colonnes colorées couvrent toute la feuille.
         const h760 = node.offsetWidth ? (node.offsetHeight * 760) / node.offsetWidth : 1075;
         const pages = Math.max(1, Math.ceil((h760 - 4) / 1075));
-        c.style.zoom = String(793.7 / 760);
-        c.style.width = '760px';
         // 1074,8 px et non 1075 : une fois agrandie, chaque page tient dans les 1122,5 px du A4 sans créer de page vide.
         c.style.minHeight = pages * 1074.8 + 'px';
         c.style.height = pages * 1074.8 + 'px';
@@ -784,11 +806,20 @@ export default class App extends React.Component {
         c.style.flexDirection = 'column';
         const grid = c.querySelector(':scope > div[style*="grid-template-columns"]');
         if (grid) grid.style.flex = '1 0 auto';
-        c.style.border = '0';
-        c.style.borderRadius = '0';
-        c.style.boxShadow = 'none';
         html = '<html><head><meta charset="utf-8"><style>@page{size:A4;margin:0}body{margin:0}</style></head><body>' + c.outerHTML.replace(/rgba\(232, 72, 28, 0\.07\)/g, 'transparent') + '</body></html>';
-      } else html = docHtml(cv, tpl).replace('margin:2cm', 'margin:0').replace('</head>', '<style>@page{size:A4;margin:2cm}</style></head>');
+      } else {
+        // Modèles ATS (Classique, Épure, Académique) : même rendu que l'aperçu, texte en flux continu.
+        // La première page garde la marge haute de la feuille ; les suivantes ont une marge de page,
+        // et aucun bloc de texte (ligne, réalisation, intitulé) n'est coupé entre deux pages.
+        const c = clean(node.cloneNode(true));
+        c.style.minHeight = '0';
+        c.style.height = 'auto';
+        c.style.overflow = 'visible';
+        c.querySelectorAll('div,p,li,span').forEach((el) => {
+          if (!el.querySelector('div,p,li')) el.style.breakInside = 'avoid';
+        });
+        html = '<html><head><meta charset="utf-8"><style>@page{size:A4;margin:14mm 0 12mm}@page:first{margin-top:0}body{margin:0}</style></head><body>' + c.outerHTML.replace(/rgba\(232, 72, 28, 0\.07\)/g, 'transparent') + '</body></html>';
+      }
       this.setState((st) => ({ exp: { ...st.exp, open: false } }));
       this.runExport('Création du PDF…', base + '.pdf' + (s.anon ? ' (anonymisé)' : ''), () => this.pdfDownload(html, base)).then((ok) => {
         if (!ok) { this.printHtml(html); this.toast('Service PDF indisponible : choisissez « Enregistrer au format PDF » dans la fenêtre d’impression'); }
@@ -1071,7 +1102,7 @@ export default class App extends React.Component {
       v = this.cur(),
       cv = v.cv,
       tpl = applyFont(resolveTpl(s.tpl, s.accent), s.font),
-      view = dashFree(s.anon ? anonCv(cv) : cv);
+      view = dashFree(withTrack(s.anon ? anonCv(cv) : cv, s.track));
     const clean = (t) => NT().autoFix(t || '').text,
       auto = s.prefs.autoClean !== false;
     const blurClean = (val, set) => {
@@ -1177,7 +1208,7 @@ export default class App extends React.Component {
       const i = cv.order.indexOf(k),
         open = guided || !!s.open[k];
       return {
-        label: (cv.kind === 'academic' ? LABELS_AC : LABELS)[k],
+        label: (s.track === 'study' ? LABELS_AC : LABELS)[k],
         meta: meta[k],
         guided,
         blocks: !guided,
@@ -1219,7 +1250,7 @@ export default class App extends React.Component {
       const on = i === stepIdx,
         done = filled[k];
       return {
-        label: (cv.kind === 'academic' ? LABELS_AC : LABELS)[k].replace(/ professionnel(le)?/, ''),
+        label: (s.track === 'study' ? LABELS_AC : LABELS)[k].replace(/ professionnel(le)?/, ''),
         num: done && !on ? '✓' : String(i + 1),
         bg: on ? 'var(--btn)' : 'var(--panel)',
         bd: on ? 'var(--btn)' : 'var(--line)',
@@ -1282,9 +1313,12 @@ export default class App extends React.Component {
             c.experiences[ei].bullets.push('');
           }),
         bullets: e.bullets.map((b, bi) => {
+          // Les propositions sont liées au texte exact de la réalisation : une fois l'une d'elles utilisée
+          // (le texte change), elles ne réapparaissent plus ; celle qui est déjà en place est masquée.
           const key = e.id + ':' + bi,
-            alts = s.sug === key ? (s.sugAlts[key] || []).map(clean) : [],
-            sugLoading = s.sug === key && !s.sugAlts[key];
+            cacheKey = key + '|' + b.trim(),
+            alts = s.sug === key ? (s.sugAlts[cacheKey] || []).map(clean).filter((a) => a.trim() !== b.trim()) : [],
+            sugLoading = s.sug === key && !s.sugAlts[cacheKey];
           return {
             text: b,
             onChange: (ev) => {
@@ -1305,7 +1339,7 @@ export default class App extends React.Component {
             toggleSug: () => {
               const open = s.sug !== key;
               this.setState({ sug: open ? key : null });
-              if (open && b.trim() && !(!isWeak(b) && hasNum(b))) this.loadSuggestions(key, b, e);
+              if (open && b.trim() && !(!isWeak(b) && hasNum(b))) this.loadSuggestions(cacheKey, b, e);
             },
             sugOpen: s.sug === key,
             weak: !!b.trim() && isWeak(b),
@@ -1936,12 +1970,20 @@ export default class App extends React.Component {
     }
     // ---- candidatures
     const ctext = cvText(cv).toLowerCase(),
+      // Correspondance calculée sur la version de CV liée à la candidature (sinon la version active),
+      // avec les mêmes mots-clés pondérés et variantes que l'écran « Adapter » : les deux scores concordent
+      // et suivent chaque modification du CV.
       matchApp = (a) => {
-        const kw = a.kw || [];
-        const found = kw.filter((k) => ctext.includes(k));
+        const vcv = (s.versions.find((x) => x.id === a.version) || {}).cv || cv;
+        if (a.kws && a.kws.length) {
+          const m = matchKw(vcv, a.kws);
+          return { pct: m.score, missing: m.list.filter((k) => !k.found).map((k) => k.k) };
+        }
+        const kw = a.kw || [], t = vcv === cv ? ctext : cvText(vcv).toLowerCase();
+        const found = kw.filter((k) => t.includes(k));
         return {
           pct: kw.length ? Math.round((found.length / kw.length) * 100) : 0,
-          missing: kw.length ? kw.filter((k) => !ctext.includes(k)) : ['offre non analysée'],
+          missing: kw.length ? kw.filter((k) => !t.includes(k)) : ['offre non analysée'],
         };
       };
     const verName = (id) => (s.versions.find((x) => x.id === id) || {}).name || '—';
@@ -2097,11 +2139,6 @@ export default class App extends React.Component {
       },
       studyHome: {
         go: (k) => this.go(k),
-        academic: cv.kind === 'academic',
-        toAcademic: () => {
-          this.go('editor');
-          this.toast('Astuce : passez votre CV au format académique dans Paramètres → Votre objectif');
-        },
         urgent: (() => {
           const n = s.schoolApps.filter((a) => a.status === 'prepare' && a.deadline && daysLeft(a.deadline) >= 0 && daysLeft(a.deadline) <= 7).length;
           return n ? n + ' candidature' + (n > 1 ? 's' : '') + ' à envoyer dans les 7 jours.' : '';
@@ -2168,19 +2205,11 @@ export default class App extends React.Component {
         },
       },
       setTrack: (k) => {
-        this.setState({ track: k });
-        this.toast(k === 'study' ? 'Mode Études : lettres, entretiens et conseils pour candidater à une formation' : 'Mode Emploi : candidatures à des postes');
-      },
-      academicCv: cv.kind === 'academic',
-      setAcademicCv: (on) => {
-        const ORDER_AC = ['summary', 'education', 'projects', 'experience', 'skills', 'languages', 'certifications'];
-        const ORDER_JOB = ['summary', 'experience', 'education', 'skills', 'languages', 'projects', 'certifications'];
-        this.mut((c) => {
-          c.kind = on ? 'academic' : '';
-          const want = on ? ORDER_AC : ORDER_JOB;
-          c.order = [...want.filter((k) => c.order.includes(k)), ...c.order.filter((k) => !want.includes(k))];
-        });
-        this.toast(on ? 'CV au format académique : formation en tête, projets et travaux académiques, distinctions' : 'CV au format professionnel');
+        if (k === s.track) return;
+        // Toutes les versions prennent le format de l'objectif : formation en tête et intitulés académiques
+        // en mode Études, expériences en tête en mode Emploi.
+        this.setState((st) => ({ track: k, versions: st.versions.map((x) => ({ ...x, cv: reorderFor(x.cv, k) })) }));
+        this.toast(k === 'study' ? 'Mode Études : CV au format académique, lettres et entretiens pour candidater à une formation' : 'Mode Emploi : CV au format professionnel, candidatures à des postes');
       },
       profile: s.profile,
       setProfile: (o) => this.setState((st) => ({ profile: { ...st.profile, ...o } })),
@@ -2343,7 +2372,7 @@ export default class App extends React.Component {
         if (stepIdx < steps.length - 1) this.setState({ step: stepIdx + 1 });
         else this.setState((st) => ({ exp: { ...st.exp, open: true, name: slug(v.name) } }));
       },
-      nextLabel: stepIdx < steps.length - 1 ? 'Suivant : ' + (cv.kind === 'academic' ? LABELS_AC : LABELS)[steps[stepIdx + 1]] + ' →' : 'Terminer et exporter',
+      nextLabel: stepIdx < steps.length - 1 ? 'Suivant : ' + (s.track === 'study' ? LABELS_AC : LABELS)[steps[stepIdx + 1]] + ' →' : 'Terminer et exporter',
       contactFields,
       summary: cv.summary,
       onSummary: (ev) => {
@@ -2408,7 +2437,8 @@ export default class App extends React.Component {
           go: () => this.setState({ libSector: k }),
         };
       }),
-      phrases: LIB[s.libSector].map((t) => ({
+      // Une formulation déjà insérée dans l'expérience ciblée n'est plus proposée.
+      phrases: LIB[s.libSector].filter((t) => !(libE && libE.bullets.some((b) => b.trim() === t))).map((t) => ({
         text: t,
         insert: () => {
           if (!libE) return;
@@ -2420,7 +2450,7 @@ export default class App extends React.Component {
             if (ei >= 0) e.bullets[ei] = t;
             else e.bullets.push(t);
           });
-          this.toast('Formulation insérée — adaptez les chiffres');
+          this.toast('Formulation insérée : adaptez les chiffres');
         },
       })),
       verbs: VERBS.map((w) => ({
@@ -2633,6 +2663,8 @@ export default class App extends React.Component {
             });
             this.setState((st) => ({
               ad: { ...st.ad, phase: 'result', analysis: an, acc, sk },
+              // Une candidature déjà suivie pour cette offre reçoit les mots-clés pondérés : son score devient exact.
+              apps: st.apps.map((x) => ((x.company === an.company && x.role === an.role) || (x.offer && x.offer === st.ad.offer) ? { ...x, kws: an.keywords, kw: an.keywords.map((k) => k.k.toLowerCase()) } : x)),
               letter: { ...st.letter, company: an.company || st.letter.company, role: an.role || st.letter.role, offerText: st.ad.offer },
               iv: st.letter.company === an.company ? st.iv : { ...st.iv, phase: 'idle' },
             }));
@@ -2681,6 +2713,7 @@ export default class App extends React.Component {
                     next: 'Envoyer la candidature',
                     version: nid,
                     kw: KW.map((k) => k.k.toLowerCase()),
+                    kws: KW,
                     offer: A.offer,
                   },
                   ...st.apps,
@@ -2698,8 +2731,15 @@ export default class App extends React.Component {
         mut((c) => {
           Object.assign(c, applyAdapt(c, ac, sk, RW));
         });
+        // La candidature correspondante (créée ou existante) suit désormais cette version et ses mots-clés.
+        this.setState((st) => {
+          const i = st.apps.findIndex((a) => a.company === AN.company && a.role === AN.role);
+          const link = { version: st.currentId, kws: KW, kw: KW.map((k) => k.k.toLowerCase()), offer: A.offer };
+          if (i >= 0) return { apps: st.apps.map((a, j) => (j === i ? { ...a, ...link } : a)) };
+          return { apps: [{ id: uid(), company: AN.company || 'Entreprise', role: AN.role || 'Poste', status: 'todo', date: '', next: 'Envoyer la candidature', ...link }, ...st.apps] };
+        });
         this.go('editor', { step: 2 });
-        this.toast('Modifications appliquées — instantané enregistré');
+        this.toast('Modifications appliquées : instantané enregistré, candidature mise à jour');
       },
       letter: {
         ...(() => {

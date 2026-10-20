@@ -4,7 +4,7 @@ import { Card, H, Muted } from '../../components/ui.jsx';
 
 const STEPS = [
   ['programs', '1', 'Trouver une formation', 'Parcoursup, écoles d’ingénieurs, Mon Master, catalogues étrangers et bourses.'],
-  ['editor', '2', 'Préparer un CV académique', 'Formation en tête, projets et travaux académiques, distinctions.'],
+  ['editor', '2', 'Préparer un CV académique', 'Format académique automatique : formation en tête, projets et travaux académiques, distinctions.'],
   ['letter', '3', 'Rédiger la lettre ou le projet d’études', 'Lettre, projet d’études, statement of purpose, personal statement, avec la limite de la plateforme.'],
   ['interview', '4', 'S’entraîner à l’entretien d’admission', 'Jury bienveillant, exigeant ou entretien Campus France, à l’écrit ou à l’oral.'],
   ['apps', '5', 'Suivre les candidatures', 'Dates limites, pièces du dossier et statut de chaque formation.'],
@@ -22,7 +22,7 @@ export default function StudyHome({ v }) {
           <button
             key={k}
             type="button"
-            onClick={() => (k === 'editor' && !S.academic ? S.toAcademic() : S.go(k))}
+            onClick={() => S.go(k)}
             style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '14px', borderRadius: '14px', border: '1px solid var(--line)', background: 'var(--panel)', color: 'var(--tx)', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}
           >
             <span style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--acs)', color: 'var(--ac)', fontSize: '12px', fontWeight: 800 }}>{n}</span>

@@ -141,7 +141,7 @@ async function analyzeOffer({ cv, offer, market, lang }) {
   ${STYLE}
   Ne réutilise que les faits du CV ; un outil absent du CV ne peut apparaître que dans une réécriture dont "check" demande de le confirmer.
 ${contextPrompt({ market, lang })}`,
-    parts: [{ text: `OFFRE :\n${txt(offer, 20_000)}\n\nCV (JSON) :\n${cvForPrompt(cv)}` }],
+    parts: [{ text: `OFFRE :\n${txt(offer, 20_000)}\n\nCV (JSON) :\n${cvForPrompt(cv)}\n\n${slotMap(cv)}` }],
     schema: S.obj({
       company: S.str,
       role: S.str,
@@ -153,8 +153,42 @@ ${contextPrompt({ market, lang })}`,
     temperature: 0.3,
   });
   out.keywords = out.keywords.map(k => ({ ...k, w: Math.max(1, Math.min(3, k.w | 0)), a: [...new Set([k.k.toLowerCase(), ...(k.a || []).map(x => String(x).toLowerCase())])].filter(Boolean) }));
-  out.rewrites = out.rewrites.map((r, i) => ({ ...r, id: 'r' + (i + 1) }));
+  out.rewrites = placeRewrites(cv, out.rewrites).map((r, i) => ({ ...r, id: 'r' + (i + 1) }));
   return out;
+}
+
+/* Plan numéroté des emplacements du CV, pour que le modèle n'ait pas à compter les expériences. */
+export function slotMap(cv) {
+  const ex = (cv && Array.isArray(cv.experiences) ? cv.experiences : []);
+  if (!ex.length) return 'EMPLACEMENTS : aucune expérience ; seules les réécritures « summary » sont possibles.';
+  return 'EMPLACEMENTS (valeurs exactes à utiliser pour "exp" et "b") :\n' + ex.map((e, i) => {
+    const bl = (e.bullets || []).map((b, j) => `    b=${j} : ${txt(b, 140)}`).join('\n');
+    return `  exp=${i} : ${[e.role, e.company].filter(Boolean).join(' · ') || '(sans intitulé)'}${bl ? '\n' + bl : '\n    (aucune réalisation)'}`;
+  }).join('\n');
+}
+
+/* Vérifie la place de chaque réécriture : l'indice doit exister et désigner l'expérience nommée dans
+   "where". Sinon on la retrouve par l'entreprise ou le poste ; si c'est impossible, on l'écarte plutôt
+   que de l'ajouter au mauvais endroit. */
+export function placeRewrites(cv, rewrites) {
+  const ex = (cv && Array.isArray(cv.experiences) ? cv.experiences : []);
+  const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const named = where => {
+    const w = norm(where);
+    const hits = ex.map((e, i) => ({ i, score: [e.company, e.role].filter(x => x && String(x).trim().length > 1 && w.includes(norm(x))).length })).filter(h => h.score);
+    hits.sort((a, b) => b.score - a.score);
+    return hits.length && (hits.length === 1 || hits[0].score > hits[1].score) ? hits[0].i : -1;
+  };
+  return (rewrites || []).flatMap(r => {
+    if (r.kind === 'summary') return [{ ...r, exp: -1, b: -1 }];
+    let exp = Number.isInteger(r.exp) && r.exp >= 0 && r.exp < ex.length ? r.exp : -1;
+    const byName = named(r.where);
+    if (byName >= 0 && byName !== exp) exp = byName; // l'intitulé lisible fait foi
+    if (exp < 0) return [];
+    const n = (ex[exp].bullets || []).length;
+    if (r.kind === 'bullet') return Number.isInteger(r.b) && r.b >= 0 && r.b < n ? [{ ...r, exp }] : [{ ...r, exp, kind: 'add', b: -1 }];
+    return [{ ...r, exp, b: -1 }];
+  });
 }
 
 /* ─── Entretien ─────────────────────────────────────────────── */
