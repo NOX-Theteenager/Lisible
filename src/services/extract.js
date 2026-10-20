@@ -31,11 +31,14 @@
     });
   }
 
+  /* pdf.js, version « legacy » (compatible avec les navigateurs moins récents, dont Safari avant la
+     version 26), avec son worker dédié qui charge d'abord les compatibilités manquantes. */
   function pdfjs() {
     if (!pdfjsP)
-      pdfjsP = Promise.all([import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')]).then(([m, w]) => ((m.GlobalWorkerOptions.workerSrc = w.default), m))
+      pdfjsP = import('./compat.js')
+        .then(() => import('pdfjs-dist/legacy/build/pdf.min.mjs'))
         .then((m) => {
-          /* worker défini ci-dessus */
+          if (!m.GlobalWorkerOptions.workerPort) m.GlobalWorkerOptions.workerPort = new Worker(new URL('./pdf-worker.js', import.meta.url), { type: 'module' });
           return m;
         })
         .catch((e) => {
