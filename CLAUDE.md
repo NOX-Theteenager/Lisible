@@ -7,7 +7,7 @@ Production : https://lisible-one.vercel.app. Chaque push sur `main` (GitHub `NOX
 ## Commandes
 
 ```bash
-npm run dev          # serveur Express + Vite (http://localhost:3000)
+npm run dev          # serveur Express + Vite (port : variable PORT du .env, 3000 par défaut)
 npm run build        # copie des bibliothèques vendor puis build Vite dans dist/
 npm start            # build puis serveur de production local
 npm run eval -- --provider=claude --tasks=study --only=<id>   # évaluation de l'IA (coûte des appels, voir plus bas)
