@@ -153,6 +153,8 @@ export default function AuthScreen({ v }) {
                 {v.au?.isForm ? (
                   <>
                     {' '}
+                    {v.au?.googleOn ? (
+                    <>
                     <button
                       onClick={v.au?.google}
                       style={{
@@ -193,7 +195,9 @@ export default function AuthScreen({ v }) {
                       <span style={{ flex: '1', height: '1px', background: 'var(--line)' }}></span>
                       {'ou avec votre e-mail'}
                       <span style={{ flex: '1', height: '1px', background: 'var(--line)' }}></span>
-                    </div>{' '}
+                    </div>
+                    </>
+                    ) : null}{' '}
                     {v.au?.isUp ? (
                       <>
                         <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -384,6 +388,15 @@ export default function AuthScreen({ v }) {
                     >
                       {v.au?.btn}
                     </button>{' '}
+                    {v.au?.canResend ? (
+                      <button
+                        type="button"
+                        onClick={v.au?.resend}
+                        style={{ alignSelf: 'center', border: 0, background: 'transparent', color: 'var(--ai)', font: 'inherit', fontSize: '13px', fontWeight: 600, cursor: 'pointer', padding: '4px' }}
+                      >
+                        {v.au?.resendBtn}
+                      </button>
+                    ) : null}
                     <div
                       style={{
                         display: 'flex',

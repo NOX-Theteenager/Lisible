@@ -401,7 +401,18 @@ export default class App extends React.Component {
       })
       .catch(() => this.setState((st) => ({ auth: { ...st.auth, ready: true, guest: true } })));
   }
-  initAuth2() {
+  async initAuth2() {
+    // Modes de connexion réellement activés (le bouton Google n'apparaît que s'il fonctionne).
+    window.CVAuth.providers().then((pv) => this.setState((st) => ({ auth: { ...st.auth, providers: pv } })));
+    // Retour d'un lien reçu par e-mail (confirmation, nouveau mot de passe) ou de Google.
+    let r = null;
+    try {
+      r = await window.CVAuth.handleRedirect();
+    } catch (e) {
+      r = { error: e.message };
+    }
+    if (r && r.recovery) this.setState((st) => ({ auth: { ...st.auth, open: true, mode: 'newpw', pw: '', err: '', info: '' } }));
+    else if (r && (r.error || r.info)) this.setState((st) => ({ auth: { ...st.auth, open: true, mode: 'in', err: r.error || '', info: r.info || '' } }));
     window.CVAuth.current()
       .then((u) => this.onUser(u))
       .catch(() => this.onUser(null));
@@ -1083,8 +1094,9 @@ export default class App extends React.Component {
         this.authSet({
           busy: false,
           pw: '',
-          info: 'Compte créé : confirmez votre adresse grâce au lien reçu par e-mail, puis connectez-vous.',
+          info: 'Compte créé : confirmez votre adresse grâce au lien reçu par e-mail (pensez aux courriers indésirables), puis connectez-vous.',
           mode: 'in',
+          resendTo: this.state.auth.email,
         });
         return;
       }
@@ -3477,6 +3489,21 @@ export default class App extends React.Component {
             google: () => {
               this.authSet({ busy: true, err: '' });
               window.CVAuth.signInGoogle().catch((e) => this.authSet({ busy: false, err: e.message }));
+            },
+            googleOn: !A.providers || A.providers.google,
+            // Renvoi de l'e-mail de confirmation : après l'inscription, ou si la connexion signale une adresse non confirmée.
+            canResend: isIn && !!(A.resendTo || (A.err && /Confirmez d’abord/.test(A.err))),
+            resendBtn: A.busy ? 'Envoi…' : 'Renvoyer l’e-mail de confirmation',
+            resend: () => {
+              const to = (A.email || A.resendTo || '').trim();
+              if (!emailOk && !A.resendTo) {
+                this.authSet({ err: 'Adresse e-mail invalide.' });
+                return;
+              }
+              this.authSet({ busy: true, err: '' });
+              window.CVAuth.resendConfirmation(to)
+                .then(() => this.authSet({ busy: false, info: 'Nouvel e-mail de confirmation envoyé à ' + to + '. Pensez à vérifier les courriers indésirables.' }))
+                .catch((e) => this.authSet({ busy: false, err: e.message }));
             },
             guest: () => {
               this.setState((st) => ({

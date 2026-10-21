@@ -160,6 +160,8 @@
     "Attendus de la formation": "Programme requirements",
     "Analyser la formation": "Analyse the programme",
     "Présentation de la formation": "Programme description",
+    "Renvoyer l’e-mail de confirmation": "Resend the confirmation email",
+    "Envoi…": "Sending…",
     "Fiche entreprise": "Company profile",
     "Lien avec l’entreprise": "Link with the company",
     "Peu d’infos trouvées : relancer": "Little found: try again",
